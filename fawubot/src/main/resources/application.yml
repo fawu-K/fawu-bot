@@ -1,0 +1,68 @@
+server:
+  servlet:
+    context-path: /
+  port: 8008
+
+spring:
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${DATABASE}?serverTimezone=UTC&allowMultiQueries=true&characterEncoding=UTF8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD}
+  redis:
+    host: 127.0.0.1
+    # redis服务器地址
+    port: 6379
+    # 默认端口就是6379 可不配置
+    #password:  # redis服务器连接密码（默认为空）
+    database: 0
+    #使用Redis0号库
+    jedis:
+      pool:
+        max-active: 8
+        # 连接池最大连接数（如果配置为<=0，则没有限制）
+
+mybatis-plus:
+  type-aliases-package: com.kang.entity
+  mapper-locations: classpath:mappers/*.xml
+
+logging:
+  level:
+    com.kang.mapper: info
+  config: classpath:logback-boot.xml
+
+# 腾讯云 配置
+tencent:
+  # 短信应用SDK AppID
+  appid: ${TENCENT_APPID}
+  # 短信应用SDK AppKey
+  appkey: ${TENCENT_APPKEY}
+  # 短信签名内容
+  sign: ${TENCENT_SIGN}
+  # 短信模板ID
+
+
+# 七牛云 配置
+qiniuyun:
+  accessKey: ${QINIUYUN_ACCESSKEY}
+  secretKey: ${QINIUYUN_SECRETKEY}
+  # 保存到的空间名称
+  bucket: ${QINIUYUN_BUCKET}
+  # 保存空间的外链接网址,例：[https:www.fawuK.com]
+  domain: ${QINIUYUN_DOMAIN}
+
+# 最高权限角色配置
+bot:
+  root-code: ${ROOT_CODE}
+
+simbot:
+  component:
+    mirai:
+      message:
+        cache:
+          enable: true
+  core:
+    continuousSession:
+      defaultTimeout: 120000

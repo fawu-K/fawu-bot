@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>fawubot</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>love.forte.simple-robot</groupId>
+                <artifactId>parent</artifactId>
+                <version>2.4.0</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+                <version>2.6.6</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <junit.version>4.12</junit.version>
+        <log4j.version>1.2.17</log4j.version>
+        <lombok.version>1.18.24</lombok.version>
+    </properties>
+
+    <dependencies>
+        <!--Mysql-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.30</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- AOP使用注解 -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--lombok-->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>love.forte.simple-robot</groupId>
+            <artifactId>component-mirai-spring-boot-starter</artifactId>
+            <version>2.4.0</version>
+            <scope>import</scope>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>love.forte.simple-robot</groupId>
+            <artifactId>component-mirai-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- web socket -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+
+        <!-- xml文件-->
+        <!--HTML解析-->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.10.2</version>
+        </dependency>
+
+        <!-- Gson依赖 -->
+        <dependency>
+            <groupId>com.squareup.retrofit2</groupId>
+            <artifactId>converter-gson</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+        <!-- 七牛云
+         使用Maven,jar包版本去7.4.0~7.4.99之间的，比如：7.4.0取不到就区7.4.1依次往后-->
+        <dependency>
+            <groupId>com.qiniu</groupId>
+            <artifactId>qiniu-java-sdk</artifactId>
+            <version>7.11.0</version>
+        </dependency>
+
+        <!-- gif -->
+        <dependency>
+            <groupId>com.madgag</groupId>
+            <artifactId>animated-gif-lib</artifactId>
+            <version>1.4</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <resources>
+            <!-- Resource Filter -->
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+            <!--指定资源的位置-->
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <!--无法分离的jar包如果jar包不大可以选择直接打入源码jar包-->
+            <!--<resource>
+                &lt;!&ndash;jar包路径&ndash;&gt;
+                <directory>${project.basedir}/libs</directory>
+                <targetPath>BOOT-INF/lib/</targetPath>
+                <includes>
+                    <include>**/*.jar</include>
+                </includes>
+            </resource>-->
+        </resources>
+        <plugins>
+            <!--打包jar-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <!--不打包资源文件-->
+                    <excludes>
+                        <exclude>*.**</exclude>
+                    </excludes>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <!--MANIFEST.MF 中 Class-Path 加入前缀-->
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <!--jar包不包含唯一版本标识-->
+                            <useUniqueVersions>false</useUniqueVersions>
+                            <!--指定入口类-->
+                            <mainClass>com.kang.BotApp</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <!--MANIFEST.MF 中 Class-Path 加入资源文件目录-->
+                            <!--本地依赖包需要手动 加入Class-Path ，否则无法找到-->
+                            <Class-Path>./bot-config/</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                </configuration>
+            </plugin>
+
+            <!--拷贝依赖 copy-dependencies-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>
+                                E:\BS\play/lib/
+                            </outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--拷贝资源文件 copy-resources-->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                </resource>
+                            </resources>
+                            <outputDirectory>${project.build.directory}/bot-config</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--spring boot repackage，依赖 maven-jar-plugin 打包的jar包 重新打包成 spring boot 的jar包-->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!--重写包含依赖，包含不存在的依赖，jar里没有pom里的依赖-->
+                    <includes>
+                        <include>
+                            <groupId>null</groupId>
+                            <artifactId>null</artifactId>
+                        </include>
+                    </includes>
+                    <layout>ZIP</layout>
+                    <!--使用外部配置文件，jar包里没有资源文件-->
+                    <addResources>true</addResources>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <!--配置jar包特殊标识 配置后，保留原文件，生成新文件 *-run.jar -->
+                            <!--配置jar包特殊标识 不配置，原文件命名为 *.jar.original，生成新文件 *.jar -->
+                            <!--<classifier>run</classifier>-->
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>1.7.0</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+        <!--<plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+        </plugin>-->
+        <!-- tag::plugin[] -->
+        <!-- end::plugin[] -->
+    </build>
+
+</project>
