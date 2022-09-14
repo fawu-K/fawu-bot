@@ -23,9 +23,22 @@ import java.util.Map;
 @Slf4j
 public class BotConfig {
 
+    /**
+     * 权限账号
+     */
     private static String ROOT_CODE;
 
+    /**
+     * 天行数据登录key
+     */
+    private static String TIAN_KEY;
+
     private final GroupStateService groupStateService;
+
+    /**
+     * 默认状态
+     */
+    private static boolean defaultState = false;
 
     /**
      * 机器人在对应群中是否启动是否启动
@@ -43,7 +56,7 @@ public class BotConfig {
      * @param rootCode yml文件中的系统账号
      */
     @Value("${bot.root-code}")
-    public void setRootCode(String rootCode){
+    private void setRootCode(String rootCode){
         ROOT_CODE = rootCode;
     }
 
@@ -53,6 +66,23 @@ public class BotConfig {
      */
     public static String getRootCode(){
         return ROOT_CODE;
+    }
+
+    /**
+     * 配置文件引入天行数据key
+     * @param tianKey key
+     */
+    @Value("${bot.tianapi-key}")
+    private void setTianKey(String tianKey) {
+        TIAN_KEY = tianKey;
+    }
+
+    /**
+     * 返回天行数据的key
+     * @return TIAN_KEY
+     */
+    public static String getTianKey(){
+        return TIAN_KEY;
     }
 
     /**
@@ -101,6 +131,6 @@ public class BotConfig {
      * @param code 群号
      */
     public void setBotState(String code) {
-        this.setBotState(code, false);
+        this.setBotState(code, defaultState);
     }
 }

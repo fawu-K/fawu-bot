@@ -2,6 +2,9 @@ package com.kang.manager;
 
 import catcode.CatCodeUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.kang.Constants;
+import com.kang.commons.util.HttpClientUtil;
+import com.kang.config.BotConfig;
 import com.kang.entity.Msg;
 import com.kang.entity.ResultByQq;
 import com.kang.web.service.ResultByQqService;
@@ -52,26 +55,21 @@ public class BotAutoManager {
         return groupInfos;
     }
 
-    public void sendByGroupAll(Map<String, List<String>> map){
-        // 一般如果你只注册了一个bot，那么可以直接使用此方法。
-        Bot defaultBot = botManager.getDefaultBot();
-        BotSender sender = defaultBot.getSender();
-        /*
-          通知玩家粮食不够
-         */
-        Set<String> keySet = map.keySet();
-        CatCodeUtil catCodeUtil = CatCodeUtil.getInstance();
+    /**
+     * 获取默认登录bot的sender，即信息发送类
+     * @return
+     */
+    public Sender getSender(){
+        return botManager.getDefaultBot().getSender().SENDER;
+    }
 
-        for (String ket: keySet){
-            StringBuilder msg = new StringBuilder();
-            List<String> accountList = map.get(ket);
-            for (String account: accountList){
-                String at = catCodeUtil.toCat("at", "code=" + account);
-                msg.append(at);
-            }
-            msg.append("\n" + "粮食不足，已停工，请注意增产！");
-            sender.SENDER.sendGroupMsg(ket, msg.toString());
-        }
+    /**
+     * 获取指定登录bot的sender
+     * @param code
+     * @return
+     */
+    public Sender getSender(String code){
+        return botManager.getBot(code).getSender().SENDER;
     }
 
     public List<BotInfo> getBotInfo(){
@@ -111,5 +109,26 @@ public class BotAutoManager {
         Getter getter = bot.getSender().GETTER;
         GroupMemberList groupMemberList = getter.getGroupMemberList(groupCode);
         return groupMemberList.getResults();
+    }
+
+    /**
+     * 发送新闻
+     */
+    public void topnews(){
+        String url = Constants.TIAN_TOPNEWS;
+        url += "?key=" + BotConfig.getTianKey();
+        String s = HttpClientUtil.doGet(url);
+        JSONObject jsonObject = JSONObject.parseObject(s);
+        List<JSONObject> newslist = (List<JSONObject>) jsonObject.get("newslist");
+
+        int count = 1;
+        StringBuilder text = new StringBuilder();
+        for (JSONObject jsonObject1 : newslist) {
+            text.append(count++).append(jsonObject1.get("title")).append("\n");
+        }
+
+        List<GroupInfo> defaultBotGroups = getDefaultBotGroups();
+        defaultBotGroups.forEach(groupInfo -> getSender().sendGroupMsg(groupInfo, text.toString()));
+
     }
 }

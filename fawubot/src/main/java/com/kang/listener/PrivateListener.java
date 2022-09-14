@@ -1,5 +1,6 @@
 package com.kang.listener;
 
+import com.kang.service.BotService;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.common.ioc.annotation.Depend;
 import love.forte.simbot.annotation.OnPrivate;
@@ -19,6 +20,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class PrivateListener {
 
+    @Autowired
+    private BotService botService;
+
     /**
      * 此监听函数监听一个私聊消息，并会复读这个消息，然后再发送一个表情。
      * 此方法上使用的是一个模板注解{@link OnPrivate}，
@@ -33,6 +37,10 @@ public class PrivateListener {
      */
     @OnPrivate
     public void replyPrivateMsg1(PrivateMsg privateMsg, Sender sender){
+        String text = privateMsg.getText();
+        String result = botService.getTianRobot(text);
+        sender.sendPrivateMsg(privateMsg, result);
+
        /* // 获取消息正文。
         MessageContent msgContent = privateMsg.getMsgContent();
         System.out.println(msgContent.getMsg());
