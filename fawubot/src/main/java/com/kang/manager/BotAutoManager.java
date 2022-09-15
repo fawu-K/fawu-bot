@@ -111,24 +111,5 @@ public class BotAutoManager {
         return groupMemberList.getResults();
     }
 
-    /**
-     * 发送新闻
-     */
-    public void topnews(){
-        String url = Constants.TIAN_TOPNEWS;
-        url += "?key=" + BotConfig.getTianKey();
-        String s = HttpClientUtil.doGet(url);
-        JSONObject jsonObject = JSONObject.parseObject(s);
-        List<JSONObject> newslist = (List<JSONObject>) jsonObject.get("newslist");
 
-        int count = 1;
-        StringBuilder text = new StringBuilder();
-        for (JSONObject jsonObject1 : newslist) {
-            text.append(count++).append(jsonObject1.get("title")).append("\n");
-        }
-
-        List<GroupInfo> defaultBotGroups = getDefaultBotGroups();
-        defaultBotGroups.forEach(groupInfo -> getSender().sendGroupMsg(groupInfo, text.toString()));
-
-    }
 }

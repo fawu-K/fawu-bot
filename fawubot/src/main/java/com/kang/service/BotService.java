@@ -7,11 +7,13 @@ import com.kang.Constants;
 import com.kang.commons.util.GifUtil;
 import com.kang.commons.util.HttpClientUtil;
 import com.kang.config.BotConfig;
+import com.kang.manager.BotAutoManager;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.common.ioc.annotation.Depend;
 import love.forte.simbot.api.message.MessageContent;
 import love.forte.simbot.api.message.MessageContentBuilder;
 import love.forte.simbot.api.message.MessageContentBuilderFactory;
+import love.forte.simbot.api.message.containers.GroupInfo;
 import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.sender.Sender;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,13 +41,16 @@ public class BotService {
     @Depend
     @Autowired
     private MessageContentBuilderFactory messageContentBuilderFactory;
+    @Autowired
+    private BotAutoManager botAutoManager;
 
     /**
      * 群聊中被at后进行的操作
+     *
      * @param groupMsg
      * @param sender
      */
-    public void atBot(GroupMsg groupMsg, Sender sender){
+    public void atBot(GroupMsg groupMsg, Sender sender) {
 
         String accountCode = groupMsg.getAccountInfo().getAccountCode();
         String text = groupMsg.getText();
@@ -61,6 +66,7 @@ public class BotService {
 
     /**
      * 调用天行数据智障机器人接口
+     *
      * @param key
      * @return
      */
@@ -71,7 +77,45 @@ public class BotService {
         url += "&question=" + key;
         String result = HttpClientUtil.doGet(url);
         JSONObject jsonObject = JSONObject.parseObject(result);
-        return (String) ((List<JSONObject>)jsonObject.get("newslist")).get(0).get("reply");
+        return (String) ((List<JSONObject>) jsonObject.get("newslist")).get(0).get("reply");
+    }
+
+    /**
+     * 发送新闻
+     */
+    public void topnews() {
+        String url = Constants.TIAN_TOPNEWS;
+        url += "?key=" + BotConfig.getTianKey();
+        String s = HttpClientUtil.doGet(url);
+        JSONObject jsonObject = JSONObject.parseObject(s);
+        List<JSONObject> newslist = (List<JSONObject>) jsonObject.get("newslist");
+
+        int count = 1;
+        StringBuilder text = new StringBuilder("【舔狗日记】\n");
+        for (JSONObject jsonObject1 : newslist) {
+            text.append(count++).append("、 ").append(jsonObject1.get("title")).append("\n");
+        }
+
+        List<GroupInfo> defaultBotGroups = botAutoManager.getDefaultBotGroups();
+        defaultBotGroups.forEach(groupInfo -> botAutoManager.getSender().sendGroupMsg(groupInfo, text.toString()));
+    }
+
+    /**
+     * 调用接口发送舔狗日记
+     */
+    public void tianGou() {
+        String url = Constants.TIAN_DOG;
+        url += "?key=" + BotConfig.getTianKey();
+        String s = HttpClientUtil.doGet(url);
+        JSONObject jsonObject = JSONObject.parseObject(s);
+        List<JSONObject> newslist = (List<JSONObject>) jsonObject.get("newslist");
+        String result = "【舔狗日记】\n" + newslist.get(0).get("content");
+
+        String tianGouUrl = "http://static.fawukang.top/tiangou.png";
+        MessageContent content = messageContentBuilderFactory.getMessageContentBuilder().image(tianGouUrl).text(result).build();
+
+        List<GroupInfo> defaultBotGroups = botAutoManager.getDefaultBotGroups();
+        defaultBotGroups.forEach(groupInfo -> botAutoManager.getSender().sendGroupMsg(groupInfo, content));
     }
 
     /**
@@ -103,29 +147,62 @@ public class BotService {
         boolean rightFlag = right.equals(rightStr);
 
         List<BufferedImage> images = new ArrayList<>();
-        for (int i = 0 ; i < 17;i++) {
+        for (int i = 0; i < 17; i++) {
             File outFile = new File(dirPath + i + ".png");
             BufferedImage image = ImageIO.read(outFile);
             switch (i) {
-                case 0: draw(image, left,45, 107, leftFlag);break;
-                case 1: draw(image, left,41, 95, leftFlag);break;
-                case 2: draw(image, left,36, 76, leftFlag);break;
+                case 0:
+                    draw(image, left, 45, 107, leftFlag);
+                    break;
+                case 1:
+                    draw(image, left, 41, 95, leftFlag);
+                    break;
+                case 2:
+                    draw(image, left, 36, 76, leftFlag);
+                    break;
                 case 3:
-                case 4: draw(image, right,322, 66, rightFlag);break;
-                case 5: draw(image, right,326, 79, rightFlag);break;
-                case 6: draw(image, right,326, 72, rightFlag);break;
-                case 7: draw(image, right,326, 75, rightFlag);break;
-                case 8: draw(image, right,331, 75, rightFlag);break;
-                case 9: draw(image, right,328, 76, rightFlag);break;
-                case 10: draw(image, right,325, 67, rightFlag);break;
-                case 11: draw(image, right,328, 70, rightFlag);break;
+                case 4:
+                    draw(image, right, 322, 66, rightFlag);
+                    break;
+                case 5:
+                    draw(image, right, 326, 79, rightFlag);
+                    break;
+                case 6:
+                    draw(image, right, 326, 72, rightFlag);
+                    break;
+                case 7:
+                    draw(image, right, 326, 75, rightFlag);
+                    break;
+                case 8:
+                    draw(image, right, 331, 75, rightFlag);
+                    break;
+                case 9:
+                    draw(image, right, 328, 76, rightFlag);
+                    break;
+                case 10:
+                    draw(image, right, 325, 67, rightFlag);
+                    break;
+                case 11:
+                    draw(image, right, 328, 70, rightFlag);
+                    break;
                 case 12:
-                case 13: draw(image, left,57, 93, leftFlag);break;
-                case 14: draw(image, left,53, 85, leftFlag);break;
-                case 15: draw(image, left,69, 98, leftFlag);break;
-                case 16: draw(image, left,62, 90, leftFlag);break;
-                case 17: draw(image, left,56, 85, leftFlag);break;
-                default: break;
+                case 13:
+                    draw(image, left, 57, 93, leftFlag);
+                    break;
+                case 14:
+                    draw(image, left, 53, 85, leftFlag);
+                    break;
+                case 15:
+                    draw(image, left, 69, 98, leftFlag);
+                    break;
+                case 16:
+                    draw(image, left, 62, 90, leftFlag);
+                    break;
+                case 17:
+                    draw(image, left, 56, 85, leftFlag);
+                    break;
+                default:
+                    break;
             }
             images.add(image);
         }
@@ -144,7 +221,7 @@ public class BotService {
 //
 //            }
             graphics.setFont(new Font("黑体", Font.BOLD, 30));
-            graphics.drawString(str,x, y);
+            graphics.drawString(str, x, y);
         } else {
             //图片
             URL url = new URL(str);
@@ -158,19 +235,19 @@ public class BotService {
             // 缩放画板
             //graphics.scale(0.5, 0.5);
             // 此时的宽和高如果大于画板则无效，自动缩放到充满画板
-            graphics.drawImage(b, x, y-20, 100, 100, null);
+            graphics.drawImage(b, x, y - 20, 100, 100, null);
         }
     }
 
-    private String catToUrl(String str){
-        if (str.startsWith("[CAT:")){
+    private String catToUrl(String str) {
+        if (str.startsWith("[CAT:")) {
             CatCodeUtil codeUtil = CatCodeUtil.getInstance();
             Neko neko = codeUtil.getNeko(str);
             String type = neko.getType();
 
             if ("face".equals(type)) {
                 String id = neko.get("id");
-                return "http://emoji.fawukang.top/s"+id+".png ";
+                return "http://emoji.fawukang.top/s" + id + ".png ";
             } else if ("image".equals(type)) {
                 return neko.get("url");
             }

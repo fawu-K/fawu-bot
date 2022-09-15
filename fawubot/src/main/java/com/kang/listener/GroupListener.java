@@ -31,10 +31,6 @@ public class GroupListener {
      */
     @Depend
     @Autowired
-    private MessageContentBuilderFactory messageContentBuilderFactory;
-    @Autowired
-    private BotAutoManager botAutoManager;
-    @Autowired
     private BotService botService;
 
     @OnGroup

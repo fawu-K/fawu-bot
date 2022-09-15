@@ -40,4 +40,8 @@ public final class Constants {
      * 智能机器人对话
      */
     public final static String TIAN_ROBOT = TIAN_URL + "robot/index";
+    /**
+     * 舔狗日记
+     */
+    public final static String TIAN_DOG = TIAN_URL + "tiangou/index";
 }
