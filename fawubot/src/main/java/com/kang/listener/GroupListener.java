@@ -2,6 +2,7 @@ package com.kang.listener;
 
 import com.kang.manager.BotAutoManager;
 import com.kang.service.BotService;
+import lombok.extern.slf4j.Slf4j;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.common.ioc.annotation.Depend;
 import love.forte.simbot.annotation.Filter;
@@ -13,6 +14,7 @@ import love.forte.simbot.api.sender.Sender;
 import love.forte.simbot.filter.MatchType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
@@ -22,12 +24,12 @@ import java.io.IOException;
  * @author: K.faWu
  * @create: 2022-04-28 16:34
  **/
+@Slf4j
 @Beans
 @Component
 public class GroupListener {
     /**
      * 通过依赖注入获取一个 "消息正文构建器工厂"。
-     *
      */
     @Depend
     @Autowired
@@ -52,13 +54,14 @@ public class GroupListener {
      */
     @Filter(atBot = true)
     @OnGroup
-    public void atBot(GroupMsg groupMsg, Sender sender){
-        System.out.println("我被@了"+groupMsg.getMsg());
-        botService.atBot(groupMsg, sender);
+    public void atBot(GroupMsg groupMsg, Sender sender) {
+        System.out.println("我被@了" + groupMsg.getMsg());
+        botService.roBot(groupMsg, sender);
     }
 
     /**
      * 可达鸭动图
+     *
      * @param groupMsg
      * @param sender
      * @throws IOException

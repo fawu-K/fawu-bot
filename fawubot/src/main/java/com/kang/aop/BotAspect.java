@@ -39,10 +39,12 @@ public class BotAspect {
                 String groupCode = groupMsg.getGroupInfo().getGroupCode();
                 if (botConfig.getBotState(groupCode)) {
                     result = point.proceed();
+                    break;
                 }
             } else if (arg instanceof PrivateMsg || arg instanceof MessageRecallEventGet) {
                 //私聊以及私聊撤回
                 result = point.proceed();
+                break;
             }
         }
         return result;

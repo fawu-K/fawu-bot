@@ -15,6 +15,7 @@ simbot:
 [天行数据网址](https://www.tianapi.com/) 注册天行数据账号并获取key值，本bot接入天行数据接口有：
     [天行机器人](https://www.tianapi.com/apiview/47) ；
     [今日头条新闻](https://www.tianapi.com/apiview/99) ；
+    [舔狗日记](https://www.tianapi.com/apiview/180) ;
 
 内容格式如下：
 ```yml

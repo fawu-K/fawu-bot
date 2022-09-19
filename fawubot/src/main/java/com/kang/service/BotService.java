@@ -4,9 +4,11 @@ import catcode.CatCodeUtil;
 import catcode.Neko;
 import com.alibaba.fastjson.JSONObject;
 import com.kang.Constants;
+import com.kang.commons.util.BotUtil;
 import com.kang.commons.util.GifUtil;
 import com.kang.commons.util.HttpClientUtil;
 import com.kang.config.BotConfig;
+import com.kang.listener.GroupListener;
 import com.kang.manager.BotAutoManager;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.common.ioc.annotation.Depend;
@@ -28,6 +30,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.awt.SystemColor.text;
+
 /**
  * @author K.faWu
  * @program fawu-bot
@@ -43,6 +47,8 @@ public class BotService {
     private MessageContentBuilderFactory messageContentBuilderFactory;
     @Autowired
     private BotAutoManager botAutoManager;
+    @Autowired
+    private TianApiTool tianApiTool;
 
     /**
      * 群聊中被at后进行的操作
@@ -50,76 +56,58 @@ public class BotService {
      * @param groupMsg
      * @param sender
      */
-    public void atBot(GroupMsg groupMsg, Sender sender) {
+    public void roBot(GroupMsg groupMsg, Sender sender) {
 
-        String accountCode = groupMsg.getAccountInfo().getAccountCode();
+        String accountCode = BotUtil.getCode(groupMsg);
         String text = groupMsg.getText();
 
         //调用api
-        String reply = getTianRobot(text);
+        String result = tianApiTool.getTianRobot(text, accountCode);
 
         //@ta,并回复
         MessageContentBuilder contentBuilder = messageContentBuilderFactory.getMessageContentBuilder();
-        MessageContent content = contentBuilder.at(accountCode).text(reply).build();
+        MessageContent content = contentBuilder.at(accountCode).text(result).build();
         sender.sendGroupMsg(groupMsg, content);
-    }
-
-    /**
-     * 调用天行数据智障机器人接口
-     *
-     * @param key
-     * @return
-     */
-    public String getTianRobot(String key) {
-        //调用api
-        String url = Constants.TIAN_ROBOT;
-        url += "?key=" + BotConfig.getTianKey();
-        url += "&question=" + key;
-        String result = HttpClientUtil.doGet(url);
-        JSONObject jsonObject = JSONObject.parseObject(result);
-        return (String) ((List<JSONObject>) jsonObject.get("newslist")).get(0).get("reply");
     }
 
     /**
      * 发送新闻
      */
     public void topnews() {
-        String url = Constants.TIAN_TOPNEWS;
-        url += "?key=" + BotConfig.getTianKey();
-        String s = HttpClientUtil.doGet(url);
-        JSONObject jsonObject = JSONObject.parseObject(s);
-        List<JSONObject> newslist = (List<JSONObject>) jsonObject.get("newslist");
-
-        int count = 1;
-        StringBuilder text = new StringBuilder("【舔狗日记】\n");
-        for (JSONObject jsonObject1 : newslist) {
-            text.append(count++).append("、 ").append(jsonObject1.get("title")).append("\n");
-        }
-
-        List<GroupInfo> defaultBotGroups = botAutoManager.getDefaultBotGroups();
-        defaultBotGroups.forEach(groupInfo -> botAutoManager.getSender().sendGroupMsg(groupInfo, text.toString()));
+        //调用接口
+        String result = tianApiTool.topnews();
+        //组合消息
+        MessageContent messageContent = messageContentBuilderFactory.getMessageContentBuilder().text(result).build();
+        //发送消息
+        sendAllGroup(messageContent);
     }
 
     /**
      * 调用接口发送舔狗日记
      */
     public void tianGou() {
-        String url = Constants.TIAN_DOG;
-        url += "?key=" + BotConfig.getTianKey();
-        String s = HttpClientUtil.doGet(url);
-        JSONObject jsonObject = JSONObject.parseObject(s);
-        List<JSONObject> newslist = (List<JSONObject>) jsonObject.get("newslist");
-        String result = "【舔狗日记】\n" + newslist.get(0).get("content");
-
+        //调用接口
+        String result = tianApiTool.tianGou();
+        //组合消息
         String tianGouUrl = "http://static.fawukang.top/tiangou.png";
-        MessageContent content = messageContentBuilderFactory.getMessageContentBuilder().image(tianGouUrl).text(result).build();
+        MessageContent messageContent = messageContentBuilderFactory.getMessageContentBuilder().image(tianGouUrl).text(result).build();
+        //发送消息
+        sendAllGroup(messageContent);
+    }
 
+    /**
+     * 群发消息，将指定消息发送到该bot存在的所有群
+     *
+     * @param messageContent 待发送消息体
+     */
+    private void sendAllGroup(MessageContent messageContent) {
         List<GroupInfo> defaultBotGroups = botAutoManager.getDefaultBotGroups();
-        defaultBotGroups.forEach(groupInfo -> botAutoManager.getSender().sendGroupMsg(groupInfo, content));
+        defaultBotGroups.forEach(groupInfo -> botAutoManager.getSender().sendGroupMsg(groupInfo, messageContent));
     }
 
     /**
      * 生成可达鸭动图
+     *
      * @param groupMsg
      * @param sender
      * @throws IOException
@@ -138,8 +126,8 @@ public class BotService {
     }
 
     private String setDuck(String leftStr, String rightStr) throws IOException {
-        String dirPath = "D:/image/";
-        String path = "D:\\image\\res.gif";
+        String dirPath = "/www/wwwroot/cloud/image";
+        String path = "/www/wwwroot/cloud/image/res.gif";
         //修改展示的类型
         String left = catToUrl(leftStr);
         boolean leftFlag = left.equals(leftStr);

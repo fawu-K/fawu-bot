@@ -53,7 +53,7 @@ public class RootListener {
     }
 
     /**
-     * 黑名单
+     * 越权行为统计名单
      */
     @Data
     public static class Blacklist {
