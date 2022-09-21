@@ -28,11 +28,6 @@ public class BotConfig {
      */
     private static String ROOT_CODE;
 
-    /**
-     * 天行数据登录key
-     */
-    private static String TIAN_KEY;
-
     private final GroupStateService groupStateService;
 
     /**
@@ -66,23 +61,6 @@ public class BotConfig {
      */
     public static String getRootCode(){
         return ROOT_CODE;
-    }
-
-    /**
-     * 配置文件引入天行数据key
-     * @param tianKey key
-     */
-    @Value("${bot.tianapi-key}")
-    private void setTianKey(String tianKey) {
-        TIAN_KEY = tianKey;
-    }
-
-    /**
-     * 返回天行数据的key
-     * @return TIAN_KEY
-     */
-    public static String getTianKey(){
-        return TIAN_KEY;
     }
 
     /**
