@@ -10,6 +10,7 @@ import com.kang.commons.util.HttpClientUtil;
 import com.kang.config.BotConfig;
 import com.kang.listener.GroupListener;
 import com.kang.manager.BotAutoManager;
+import lombok.extern.slf4j.Slf4j;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.common.ioc.annotation.Depend;
 import love.forte.simbot.api.message.MessageContent;
@@ -38,6 +39,7 @@ import static java.awt.SystemColor.text;
  * @description: 服务层
  * @create 2022-09-14 15:54
  **/
+@Slf4j
 @Beans
 @Service
 public class BotService {
@@ -126,7 +128,7 @@ public class BotService {
     }
 
     private String setDuck(String leftStr, String rightStr) throws IOException {
-        String dirPath = "/www/wwwroot/cloud/image";
+        String dirPath = "/www/wwwroot/cloud/image/";
         String path = "/www/wwwroot/cloud/image/res.gif";
         //修改展示的类型
         String left = catToUrl(leftStr);

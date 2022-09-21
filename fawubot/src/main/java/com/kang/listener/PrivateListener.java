@@ -3,7 +3,6 @@ package com.kang.listener;
 import com.kang.commons.util.BotUtil;
 import com.kang.service.BotService;
 import com.kang.service.TianApiTool;
-import com.kang.task.scheduleTask.TestScheduleTask;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.simbot.annotation.OnPrivate;
 import love.forte.simbot.api.message.events.PrivateMsg;
@@ -25,8 +24,6 @@ public class PrivateListener {
     private BotService botService;
     @Autowired
     private TianApiTool tianApiUtil;
-    @Autowired
-    private TestScheduleTask task;
 
     /**
      * 此监听函数监听一个私聊消息，并会复读这个消息，然后再发送一个表情。

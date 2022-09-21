@@ -102,7 +102,7 @@ public class HttpClientUtil {
      */
     public static String doGet(String pathUrl){
         BufferedReader br = null;
-        String result = "";
+        StringBuilder result = new StringBuilder();
         try {
             URL url = new URL(pathUrl);
 
@@ -143,7 +143,7 @@ public class HttpClientUtil {
             br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
             String str = "";
             while ((str = br.readLine()) != null){
-                result += str;
+                result.append(str);
             }
             System.out.println(result);
             //关闭流
@@ -161,7 +161,7 @@ public class HttpClientUtil {
                 e.printStackTrace();
             }
         }
-        return result;
+        return result.toString();
     }
 }
 

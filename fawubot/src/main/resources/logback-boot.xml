@@ -47,5 +47,8 @@
     <logger name="com.kang.web.mapper" level="DEBUG">
         <appender-ref ref="demolog" />
     </logger>
+    <logger name="com.kang.game.monasticPractice.mapper" level="DEBUG">
+        <appender-ref ref="demolog" />
+    </logger>
     <logger name="org.slf4j" level="TRACE" />
 </configuration>
