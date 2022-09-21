@@ -126,7 +126,7 @@ public class BotService {
     }
 
     private String setDuck(String leftStr, String rightStr) throws IOException {
-        String dirPath = "/www/wwwroot/cloud/image";
+        String dirPath = "/www/wwwroot/cloud/image/";
         String path = "/www/wwwroot/cloud/image/res.gif";
         //修改展示的类型
         String left = catToUrl(leftStr);
