@@ -1,12 +1,10 @@
 package com.kang.aop;
 
+import com.kang.commons.util.BotUtil;
 import com.kang.config.BotConfig;
 import lombok.extern.slf4j.Slf4j;
 import love.forte.simbot.api.message.containers.GroupContainer;
-import love.forte.simbot.api.message.events.GroupMsg;
-import love.forte.simbot.api.message.events.GroupMsgRecall;
-import love.forte.simbot.api.message.events.MessageRecallEventGet;
-import love.forte.simbot.api.message.events.PrivateMsg;
+import love.forte.simbot.api.message.events.*;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -45,6 +43,26 @@ public class BotAspect {
                 //私聊以及私聊撤回
                 result = point.proceed();
                 break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 高权限操作，判断账号是否为高权限账号
+     */
+    @Around("execution(* com.kang.root..*.*(..))")
+    public Object rootListener(ProceedingJoinPoint point) throws Throwable {
+        Object result = null;
+        Object[] args = point.getArgs();
+        for (Object arg : args) {
+            if (arg instanceof MessageGet) {
+                MessageGet msgGet = (MessageGet)arg;
+                String code = BotUtil.getCode(msgGet);
+                if (BotConfig.getRootCode().equals(code)) {
+                    result = point.proceed();
+                    break;
+                }
             }
         }
         return result;
