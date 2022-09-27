@@ -64,6 +64,18 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
         //计算出本次要增加的经验
         BigDecimal addExp = speed1.multiply(exp);
+
+        return addExp(role, addExp);
+    }
+
+    /**
+     * 对角色进行增加经验处理
+     * @param role 角色
+     * @param addExp 需要增加的经验
+     */
+    @Override
+    public RoleVo addExp(Role role, BigDecimal addExp) {
+        Lv lv = PlayConfig.getLvMap(role.getLvType(), role.getLv());
         //判断该次增加的经验是否超出了当前等级需要的经验
         if (lv.getExpMax().compareTo(role.getExp().add(addExp)) <= 0) {
             //等级经验超过了
@@ -73,7 +85,6 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             role.setExp(role.getExp().add(addExp));
         }
         roleMapper.updateById(role);
-
         return new RoleVo(role, lv);
     }
 
