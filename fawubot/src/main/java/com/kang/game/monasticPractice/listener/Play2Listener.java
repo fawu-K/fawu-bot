@@ -49,7 +49,7 @@ public class Play2Listener {
     @Filter(value = "大荒指令")
     public void help(GroupMsg groupMsg, Sender sender) {
         String result = "【大荒指令】\n" +
-                "[修炼]、[突破]、[内视]、[查阅修炼等级#武道/练气]";
+                "[修炼]、[突破]、[内视]、[查阅修炼等级+武道/练气]、[历练]";
         sender.sendGroupMsg(groupMsg, result);
     }
 
@@ -75,7 +75,7 @@ public class Play2Listener {
     }
 
     /**
-     * 进行突破操作，若是从0级突破到1级需要选择修炼类型
+     * 进行突破操作，若是从0级突破1111到1级需要选择修炼类型
      * 经验需要达到当前等级的最高才能进行突破
      */
     @OnGroup
