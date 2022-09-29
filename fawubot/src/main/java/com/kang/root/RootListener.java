@@ -1,11 +1,17 @@
 package com.kang.root;
 
+import com.kang.commons.util.BotUtil;
 import com.kang.config.BotConfig;
+import com.kang.manager.BotAutoManager;
 import com.kang.web.service.RootService;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.simbot.annotation.Filter;
+import love.forte.simbot.annotation.Listen;
+import love.forte.simbot.annotation.OnFriendAddRequest;
 import love.forte.simbot.annotation.OnGroup;
+import love.forte.simbot.api.message.events.FriendAddRequest;
 import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.sender.Sender;
 import love.forte.simbot.filter.MatchType;
@@ -23,6 +29,7 @@ import java.util.Map;
  * @description: 系统设置类
  * @create 2022-09-09 15:51
  **/
+@Slf4j
 @Beans
 @Component
 public class RootListener {
@@ -31,6 +38,8 @@ public class RootListener {
 
     @Autowired
     private RootService rootService;
+    @Autowired
+    private BotAutoManager botAutoManager;
 
     public final static Map<String, List<Blacklist>> BLACKLISTS = new HashMap<>();
 
@@ -50,6 +59,14 @@ public class RootListener {
     @Filter(value = OFF, matchType = MatchType.EQUALS)
     public void off(GroupMsg groupMsg, Sender sender) {
         rootService.openOrOff(groupMsg, false);
+    }
+
+    @Listen(FriendAddRequest.class)
+    public void onFriendAddRequest(FriendAddRequest request) {
+        String code = BotUtil.getCode(request);
+        log.debug("用户[{}]添加好友==========", code);
+        botAutoManager.getSetter().setFriendAddRequest(request.getFlag(), null, true, false);
+        botAutoManager.getSender().sendPrivateMsg(code, "你好~");
     }
 
     /**

@@ -2,6 +2,7 @@ package com.kang.commons.util;
 
 import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.message.events.MessageGet;
+import love.forte.simbot.api.message.events.MsgGet;
 import love.forte.simbot.api.message.events.PrivateMsg;
 
 /**
@@ -34,10 +35,19 @@ public class BotUtil {
     /**
      * 获取消息体中的发送消息人账号
      * @param messageGet 消息体
-     * @return 昵称
+     * @return 账号
      */
     public static String getCode(MessageGet messageGet) {
         return messageGet.getAccountInfo().getAccountCode();
+    }
+
+    /**
+     * 获取消息体中的发送消息人账号
+     * @param msgGet 消息体
+     * @return 账号
+     */
+    public static String getCode(MsgGet msgGet) {
+        return msgGet.getAccountInfo().getAccountCode();
     }
 
     /**

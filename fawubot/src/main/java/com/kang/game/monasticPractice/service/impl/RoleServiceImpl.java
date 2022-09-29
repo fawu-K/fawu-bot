@@ -1,5 +1,6 @@
 package com.kang.game.monasticPractice.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kang.config.PlayConfig;
 import com.kang.entity.monasticPractice.play2.Lv;
@@ -44,6 +45,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         int gasNum = speedService.getGasNum();
         role.setGasNum(gasNum);
         roleMapper.insert(role);
+        QueryWrapper<Role> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", accountCode);
+        role = roleMapper.selectOne(queryWrapper);
+        PlayConfig.setRoleMap(accountCode, role);
         return role;
     }
 

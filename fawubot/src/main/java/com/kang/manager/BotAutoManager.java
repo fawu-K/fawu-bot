@@ -13,12 +13,17 @@ import love.forte.common.ioc.annotation.Depend;
 import love.forte.simbot.api.message.MessageContent;
 import love.forte.simbot.api.message.containers.BotInfo;
 import love.forte.simbot.api.message.containers.GroupInfo;
+import love.forte.simbot.api.message.events.GroupMsg;
+import love.forte.simbot.api.message.events.MessageGet;
+import love.forte.simbot.api.message.events.MsgGet;
+import love.forte.simbot.api.message.events.PrivateMsg;
 import love.forte.simbot.api.message.results.GroupList;
 import love.forte.simbot.api.message.results.GroupMemberInfo;
 import love.forte.simbot.api.message.results.GroupMemberList;
 import love.forte.simbot.api.sender.BotSender;
 import love.forte.simbot.api.sender.Getter;
 import love.forte.simbot.api.sender.Sender;
+import love.forte.simbot.api.sender.Setter;
 import love.forte.simbot.bot.Bot;
 import love.forte.simbot.bot.BotManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +48,24 @@ public class BotAutoManager {
     private BotManager botManager;
     @Autowired
     private ResultByQqService resultByQqService;
+
+
+    public Setter getSetter() {
+        return botManager.getDefaultBot().getSender().SETTER;
+    }
+
+    /**
+     * 根据接受信息的类型来判断是群消息还是私聊消息
+     * @param msgGet
+     * @param msg
+     */
+    public void sendMsg(MsgGet msgGet, String msg) {
+        if (msgGet instanceof GroupMsg) {
+            this.getSender().sendGroupMsg((GroupMsg) msgGet, msg);
+        } else if (msgGet instanceof PrivateMsg) {
+            this.getSender().sendPrivateMsg(msgGet, msg);
+        }
+    }
 
     /**
      * 获取默认登录bot的所有群信息

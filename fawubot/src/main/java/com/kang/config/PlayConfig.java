@@ -84,6 +84,15 @@ public class PlayConfig {
     }
 
     /**
+     * 向角色信息表里添加一个角色信息
+     * @param code 角色账号
+     * @param role 角色信息
+     */
+    public static void setRoleMap(String code, Role role) {
+        ROLE_MAP.put(code, role);
+    }
+
+    /**
      * 获取已知先天之气对应修炼关系
      * @return 对应关系
      */

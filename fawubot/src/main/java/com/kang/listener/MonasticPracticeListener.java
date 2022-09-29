@@ -1,5 +1,6 @@
 package com.kang.listener;
 
+import com.kang.commons.util.CommonsUtils;
 import com.kang.config.PlayConfig;
 import com.kang.entity.monasticPractice.play2.Role;
 import com.kang.entity.monasticPractice.play2.Speed;
@@ -9,10 +10,13 @@ import lombok.extern.slf4j.Slf4j;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.simbot.annotation.Filter;
 import love.forte.simbot.annotation.OnGroup;
+import love.forte.simbot.annotation.OnPrivate;
 import love.forte.simbot.annotation.OnlySession;
 import love.forte.simbot.api.message.events.GroupMsg;
+import love.forte.simbot.api.message.events.PrivateMsg;
 import love.forte.simbot.api.sender.Sender;
 import love.forte.simbot.filter.MatchType;
+import love.forte.simbot.listener.ContinuousSessionContinuation;
 import love.forte.simbot.listener.ContinuousSessionScopeContext;
 import love.forte.simbot.listener.ListenerContext;
 import love.forte.simbot.listener.SessionCallback;
@@ -47,28 +51,28 @@ public class MonasticPracticeListener {
      * 开始游戏，抽取角色属性
      */
     @Filter(value = "加入大陆", matchType = MatchType.EQUALS)
-    @OnGroup
-    public void init(GroupMsg groupMsg, ListenerContext context, Sender sender) {
+    @OnPrivate
+    public void init(PrivateMsg privateMsg, ListenerContext context, Sender sender) {
 
         // 得到session上下文，并断言它的确不是null
         final ContinuousSessionScopeContext sessionContext = (ContinuousSessionScopeContext) context.getContext(ListenerContext.Scope.CONTINUOUS_SESSION);
         assert sessionContext != null;
 
-        final String accountCode = groupMsg.getAccountInfo().getAccountCode();
+        final String accountCode = privateMsg.getAccountInfo().getAccountCode();
 
-        sender.sendGroupMsg(groupMsg, "请输入昵称(不超过6个字符)：");
+        sender.sendPrivateMsg(privateMsg, "请输入昵称(不超过6个字符)：");
 
         // 创建回调函数 SessionCallback 实例。
         // 通过 SessionCallback.builder 进行创建
         final SessionCallback<String> callback = SessionCallback.<String>builder().onResume(name -> {
-            sender.sendGroupMsg(groupMsg, "角色：" + name + "，请选择性别(男/女)：");
+            sender.sendPrivateMsg(privateMsg, "角色：" + name + "，请选择性别(男/女)：");
             sessionContext.waiting(SEX, accountCode, sex -> {
-                sender.sendGroupMsg(groupMsg, "角色生成中...");
+                sender.sendPrivateMsg(privateMsg, "角色生成中...");
                 //创建角色
                 Role role = roleService.init(accountCode, name, sex.toString());
                 Speed speed = PlayConfig.getSpeedMap(role.getGasNum());
                 //展示角色信息
-                sender.sendGroupMsg(groupMsg, "角色创建成功：\n" +
+                sender.sendPrivateMsg(privateMsg, "角色创建成功：\n" +
                         role +
                         name + "拥有" + role.getGasNum() + "条先天之气，" +
                         "修炼速度为每次修炼经验基础的" + speed.getSpeed() + "倍。\n" +
@@ -86,9 +90,9 @@ public class MonasticPracticeListener {
         sessionContext.waiting(NAME, accountCode, callback);
     }
 
-    @OnGroup
+    @OnPrivate
     @OnlySession(group = NAME)
-    public void name(GroupMsg m, ListenerContext context, Sender sender) {
+    public void name(PrivateMsg m, ListenerContext context, Sender sender) {
         // 得到session上下文。
 
         final ContinuousSessionScopeContext session = (ContinuousSessionScopeContext) context.getContext(ListenerContext.Scope.CONTINUOUS_SESSION);
@@ -100,13 +104,13 @@ public class MonasticPracticeListener {
             // 尝试将这个phone推送给对应的会话。
             session.push(NAME, code, text);
         } else {
-            sender.sendGroupMsg(m, "昵称请勿超过6个字符");
+            sender.sendPrivateMsg(m, "昵称请勿超过6个字符");
         }
     }
 
-    @OnGroup
+    @OnPrivate
     @OnlySession(group = SEX)
-    public void onName(GroupMsg m, ListenerContext context, Sender sender) {
+    public void onName(PrivateMsg m, ListenerContext context, Sender sender) {
         // 得到session上下文。
         final ContinuousSessionScopeContext session = (ContinuousSessionScopeContext) context.getContext(ListenerContext.Scope.CONTINUOUS_SESSION);
         assert session != null;
@@ -117,7 +121,7 @@ public class MonasticPracticeListener {
             // 尝试推送结果
             session.push(SEX, code, text);
         } else {
-            sender.sendGroupMsg(m, "性别选择错误请重新选择(男/女)：");
+            sender.sendPrivateMsg(m, "性别选择错误请重新选择(男/女)：");
             session.push(NAME, code, text);
         }
     }

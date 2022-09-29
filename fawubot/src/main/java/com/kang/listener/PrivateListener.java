@@ -39,9 +39,9 @@ public class PrivateListener {
      */
     @OnPrivate
     public void replyPrivateMsg1(PrivateMsg privateMsg, Sender sender){
-        String text = privateMsg.getText();
+/*        String text = privateMsg.getText();
         String result = tianApiUtil.getTianRobot(text, BotUtil.getCode(privateMsg));
-        sender.sendPrivateMsg(privateMsg, result);
+        sender.sendPrivateMsg(privateMsg, result);*/
 
        /* // 获取消息正文。
         MessageContent msgContent = privateMsg.getMsgContent();

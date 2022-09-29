@@ -16,8 +16,9 @@ import lombok.EqualsAndHashCode;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.simbot.annotation.Filter;
 import love.forte.simbot.annotation.OnGroup;
+import love.forte.simbot.annotation.OnPrivate;
 import love.forte.simbot.annotation.OnlySession;
-import love.forte.simbot.api.message.events.GroupMsg;
+import love.forte.simbot.api.message.events.MsgGet;
 import love.forte.simbot.api.sender.Sender;
 import love.forte.simbot.filter.MatchType;
 import love.forte.simbot.listener.ContinuousSessionScopeContext;
@@ -62,13 +63,13 @@ public class BattleListener {
     /**
      * 历练，可以通过历练激活随机事件
      *
-     * @param groupMsg
-     * @param sender
+     * @param msgGet 消息体
      */
     @OnGroup
+    @OnPrivate
     @Filter(value = "历练", matchType = MatchType.EQUALS)
-    public void experience(GroupMsg groupMsg, ListenerContext context, Sender sender) {
-        String code = BotUtil.getCode(groupMsg);
+    public void experience(MsgGet msgGet, ListenerContext context) {
+        String code = BotUtil.getCode(msgGet);
         Role role = PlayConfig.getRoleMap(code);
 
         // 获取随机事件，通过事件激活对话
@@ -79,30 +80,29 @@ public class BattleListener {
         assert sessionContext != null;
 
         // 这里开始等待第一个会话。
-        sessionContext.waiting(EXPERIENCE, code, event(groupMsg, context, sender, sessionContext, eventVo));
+        sessionContext.waiting(EXPERIENCE, code, event(msgGet, context, sessionContext, eventVo));
     }
 
     /**
      * 事件会话
      *
      * @param sessionContext 持续会话
-     * @param groupMsg       信息体
-     * @param sender         发送功能
+     * @param msgGet       信息体
      * @param context        会话体
      * @param eventVo        触发的事件
      * @return 持续会话返回
      */
-    private SessionCallback<?> event(GroupMsg groupMsg, ListenerContext context, Sender sender, ContinuousSessionScopeContext sessionContext, EventVo eventVo) {
+    private SessionCallback<?> event(MsgGet msgGet, ListenerContext context,  ContinuousSessionScopeContext sessionContext, EventVo eventVo) {
         //播放事件信息
-        sender.sendGroupMsg(groupMsg, eventVo.toString());
+        botAutoManager.sendMsg(msgGet, eventVo.toString());
 
         return SessionCallback.<String>builder().onResume(choice -> {
             //获取选项的下一个事件
             EventVo next = eventService.toNext(eventVo.getId(), choice);
             // 进行事件走向判断
-            String msg = this.toNext(groupMsg, context, sender, sessionContext, next);
+            String msg = this.toNext(msgGet, context, sessionContext, next);
             if (CommonsUtils.isNotEmpty(msg)) {
-                sender.sendGroupMsg(groupMsg, msg);
+                botAutoManager.sendMsg(msgGet, msg);
             }
         }).onError(e -> System.out.println("onError 出错啦: " + e)).onCancel(e -> {
             // 这里是第一个会话，此处通过 onCancel 来处理会话被手动关闭、超时关闭的情况的处理，有些时候会与 orError 同时被触发（例如超时的时候）
@@ -115,23 +115,22 @@ public class BattleListener {
      * 战斗、对话、新的事件、结束等等操作
      *
      * @param sessionContext 持续会话
-     * @param groupMsg       信息体
-     * @param sender         发送功能
+     * @param msgGet       信息体
      * @param context        会话体
      * @param next           触发的事件
      * @return 是否有回复语
      */
-    private String toNext(GroupMsg groupMsg, ListenerContext context, Sender sender, ContinuousSessionScopeContext sessionContext, EventVo next) {
+    private String toNext(MsgGet msgGet, ListenerContext context, ContinuousSessionScopeContext sessionContext, EventVo next) {
 
         String result = null;
-        String code = BotUtil.getCode(groupMsg);
+        String code = BotUtil.getCode(msgGet);
 
         if (BATTLE.equals(next.getType())) {
             //进行战斗
-            this.battle(groupMsg, context, sender, next);
+            this.battle(msgGet, context, next);
         } else if (EVENT.equals(next.getType())) {
             //重新创建事件会话
-            sessionContext.waiting(EXPERIENCE, code, event(groupMsg, context, sender, sessionContext, next));
+            sessionContext.waiting(EXPERIENCE, code, event(msgGet, context, sessionContext, next));
         } else if (END.equals(next.getType())) {
             result = end(code, next);
         }
@@ -139,14 +138,15 @@ public class BattleListener {
     }
 
     @OnGroup
+    @OnPrivate
     @OnlySession(group = EXPERIENCE)
-    public void isExperience(GroupMsg groupMsg, ListenerContext context, Sender sender) {
+    public void isExperience(MsgGet msgGet, ListenerContext context, Sender sender) {
         // 得到session上下文。
         final ContinuousSessionScopeContext session = (ContinuousSessionScopeContext) context.getContext(ListenerContext.Scope.CONTINUOUS_SESSION);
         assert session != null;
 
-        String code = BotUtil.getCode(groupMsg);
-        String text = groupMsg.getText();
+        String code = BotUtil.getCode(msgGet);
+        String text = msgGet.getText();
         // 尝试将这个选择推送给对应的会话。
         session.push(EXPERIENCE, code, text);
     }
@@ -155,13 +155,12 @@ public class BattleListener {
      * 战斗操作
      * 获取双方的角色信息，并进行战斗操作
      *
-     * @param groupMsg
-     * @param context
-     * @param sender
+     * @param msgGet 消息体
+     * @param context 会话
      */
-    public void battle(GroupMsg groupMsg, ListenerContext context, Sender sender, EventVo eventVo) {
+    public void battle(MsgGet msgGet, ListenerContext context, EventVo eventVo) {
         //获取双方角色以及技能信息
-        String code = BotUtil.getCode(groupMsg);
+        String code = BotUtil.getCode(msgGet);
         Role role = PlayConfig.getRoleMap(code);
         List<Skill> skills = skillService.getSkill(role.getId());
         BattleRole battleRole = new BattleRole(role, skills);
@@ -177,13 +176,13 @@ public class BattleListener {
         // 得到session上下文，并断言它的确不是null
         final ContinuousSessionScopeContext sessionContext = (ContinuousSessionScopeContext) context.getContext(ListenerContext.Scope.CONTINUOUS_SESSION);
         assert sessionContext != null;
-        sender.sendGroupMsg(groupMsg, "您的信息：\n" + battleRole + "\n" +
+        botAutoManager.sendMsg(msgGet, "您的信息：\n" + battleRole + "\n" +
                 "======================\n" +
                 "敌方信息：\n" + battleRole1 + "\n" +
                 "战斗开始，当前为你的回合，请输入您要使用的技能:");
 
         // 这里开始等待第一个会话。
-        sessionContext.waiting(BATTLE, code, battleKill(battleRole, battleRole1, sessionContext, groupMsg, context, eventVo));
+        sessionContext.waiting(BATTLE, code, battleKill(battleRole, battleRole1, sessionContext, msgGet, context, eventVo));
     }
 
     /**
@@ -192,20 +191,19 @@ public class BattleListener {
      * @param battleRole     我方角色
      * @param battleRole1    对方角色
      * @param sessionContext 持续会话
-     * @param groupMsg       信息体
+     * @param msgGet       信息体
      * @param context        会话体
      * @return 持续会话返回
      */
-    private SessionCallback<?> battleKill(BattleRole battleRole, BattleRole battleRole1, ContinuousSessionScopeContext sessionContext, GroupMsg groupMsg, ListenerContext context, EventVo eventVo) {
+    private SessionCallback<?> battleKill(BattleRole battleRole, BattleRole battleRole1, ContinuousSessionScopeContext sessionContext, MsgGet msgGet, ListenerContext context, EventVo eventVo) {
         return SessionCallback.<String>builder().onResume(str -> {
-            Sender sender = botAutoManager.getSender();
-            String code = BotUtil.getCode(groupMsg);
+            String code = BotUtil.getCode(msgGet);
             //寻找对应技能
             Skill skill = getSkill(battleRole.getSkills(), str);
             //进行技能伤害伤害
             String killMsg = kill(battleRole, battleRole1, skill);
             if ("逃跑".equals(skill.getType())) {
-                sender.sendGroupMsg(groupMsg, killMsg);
+                botAutoManager.sendMsg(msgGet, killMsg);
                 return;
             }
 
@@ -217,40 +215,40 @@ public class BattleListener {
                 //进行伤害
                 String killMsg2 = kill(battleRole1, battleRole, skill1);
                 if ("逃跑".equals(skill1.getType())) {
-                    sender.sendGroupMsg(groupMsg, killMsg + "\n====================\n" + killMsg2);
+                    botAutoManager.sendMsg(msgGet, killMsg + "\n====================\n" + killMsg2);
                     return;
                 }
 
                 if (battleRole.getSurplusHp() > 0) {
                     //己方未被杀死
                     //播放双方伤害信息
-                    sender.sendGroupMsg(groupMsg, killMsg + "\n====================\n" + killMsg2 + "\n请选择你要使用的技能:");
+                    botAutoManager.sendMsg(msgGet, killMsg + "\n====================\n" + killMsg2 + "\n请选择你要使用的技能:");
 
                     //重新回调这个方法，再次进行战斗
-                    sessionContext.waiting(BATTLE, code, battleKill(battleRole, battleRole1, sessionContext, groupMsg, context, eventVo));
+                    sessionContext.waiting(BATTLE, code, battleKill(battleRole, battleRole1, sessionContext, msgGet, context, eventVo));
                 } else {
                     //失败结束事件
                     EventVo next = eventService.toNext(eventVo.getId(), "失败");
                     //进行事件走向判断
-                    String result = this.toNext(groupMsg, context, sender, sessionContext, next);
+                    String result = this.toNext(msgGet, context, sessionContext, next);
                     // 战斗结束语
                     String msg = String.format("%s使用[%s]技能打败了你！", battleRole1.getName(), skill1.getName());
                     if (CommonsUtils.isNotEmpty(result)) {
                         msg += "\n" + result;
                     }
-                    sender.sendGroupMsg(groupMsg, msg);
+                    botAutoManager.sendMsg(msgGet, msg);
                 }
             } else {
                 //胜利结束事件
                 EventVo next = eventService.toNext(eventVo.getId(), "胜利");
                 //进行事件走向判断
-                String result = this.toNext(groupMsg, context, sender, sessionContext, next);
+                String result = this.toNext(msgGet, context, sessionContext, next);
                 // 战斗结束语
                 String msg = String.format("您使用[%s]对%s进行了绝杀！", skill.getName(), battleRole1.getName());
                 if (CommonsUtils.isNotEmpty(result)) {
                     msg += "\n" + result;
                 }
-                sender.sendGroupMsg(groupMsg, msg);
+                botAutoManager.sendMsg(msgGet, msg);
             }
         }).build();
     }
@@ -300,7 +298,7 @@ public class BattleListener {
      * @param battleRole  伤害者
      * @param battleRole1 被伤害者
      * @param skill       造成伤害的技能
-     * @return
+     * @return 技能伤害信息
      */
     private String kill(BattleRole battleRole, BattleRole battleRole1, Skill skill) {
         String killMsg = "";
@@ -351,16 +349,17 @@ public class BattleListener {
     }
 
     @OnGroup
+    @OnPrivate
     @OnlySession(group = BATTLE)
-    public void isBattle(GroupMsg groupMsg, ListenerContext context, Sender sender) {
+    public void isBattle(MsgGet msgGet, ListenerContext context, Sender sender) {
         // 得到session上下文。
         final ContinuousSessionScopeContext session = (ContinuousSessionScopeContext) context.getContext(ListenerContext.Scope.CONTINUOUS_SESSION);
         assert session != null;
 
-        String code = BotUtil.getCode(groupMsg);
-        String text = groupMsg.getText();
+        String code = BotUtil.getCode(msgGet);
+        String text = msgGet.getText();
         // 尝试将这个选择推送给对应的会话。
-        boolean push = session.push(BATTLE, code, text);
+        session.push(BATTLE, code, text);
     }
 
 
