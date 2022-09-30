@@ -5,18 +5,14 @@ import com.kang.config.PlayConfig;
 import com.kang.entity.monasticPractice.play2.Role;
 import com.kang.entity.monasticPractice.play2.Speed;
 import com.kang.game.monasticPractice.service.RoleService;
-import com.kang.game.monasticPractice.service.impl.RoleServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.simbot.annotation.Filter;
-import love.forte.simbot.annotation.OnGroup;
 import love.forte.simbot.annotation.OnPrivate;
 import love.forte.simbot.annotation.OnlySession;
-import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.message.events.PrivateMsg;
 import love.forte.simbot.api.sender.Sender;
 import love.forte.simbot.filter.MatchType;
-import love.forte.simbot.listener.ContinuousSessionContinuation;
 import love.forte.simbot.listener.ContinuousSessionScopeContext;
 import love.forte.simbot.listener.ListenerContext;
 import love.forte.simbot.listener.SessionCallback;
@@ -59,7 +55,10 @@ public class MonasticPracticeListener {
         assert sessionContext != null;
 
         final String accountCode = privateMsg.getAccountInfo().getAccountCode();
-
+        if (CommonsUtils.isNotEmpty(PlayConfig.getRoleMap(accountCode))) {
+            sender.sendPrivateMsg(privateMsg, "您在天荒大陆已有化身，请勿重复加入，使用指令[内视]查看化身信息");
+            return;
+        }
         sender.sendPrivateMsg(privateMsg, "请输入昵称(不超过6个字符)：");
 
         // 创建回调函数 SessionCallback 实例。
@@ -79,9 +78,7 @@ public class MonasticPracticeListener {
                         speed.getInfo() +
                         "\n祝君武道昌隆！");
             });
-        }).onError(e -> {
-            System.out.println("onError 出错啦: " + e);
-        }).onCancel(e -> {
+        }).onError(e -> System.out.println("onError 出错啦: " + e)).onCancel(e -> {
             // 这里是第一个会话，此处通过 onCancel 来处理会话被手动关闭、超时关闭的情况的处理，有些时候会与 orError 同时被触发（例如超时的时候）
             System.out.println("onCancel 关闭啦: " + e);
         }).build(); // build 构建

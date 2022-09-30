@@ -58,6 +58,8 @@ bot:
   root-code: ${ROOT_CODE}
   #天行数据接口
   tianapi-key: ${TIANAPI_KEY}
+#  图片保存文件夹
+  imag-path: ${IMAG_PATH}
 
 simbot:
   component:
