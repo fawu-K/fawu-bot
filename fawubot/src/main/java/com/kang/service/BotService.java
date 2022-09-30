@@ -20,6 +20,7 @@ import love.forte.simbot.api.message.containers.GroupInfo;
 import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.sender.Sender;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -105,6 +106,24 @@ public class BotService {
     private void sendAllGroup(MessageContent messageContent) {
         List<GroupInfo> defaultBotGroups = botAutoManager.getDefaultBotGroups();
         defaultBotGroups.forEach(groupInfo -> botAutoManager.getSender().sendGroupMsg(groupInfo, messageContent));
+    }
+
+    @Value("${bot.imag-path}")
+    private String seTuPath;
+
+    public void downloadsSeTu(long count) {
+        log.debug("开始下载图片：此次下载图片数量-{}", count);
+        long successCount = 0;
+        for (int i = 0; i<count; i++) {
+            String s = HttpClientUtil.doGet("https://ybapi.cn/API/setu_r18.php?type=text");
+            String[] split = s.split("/");
+            String name = split[split.length-1];
+            boolean flag = HttpClientUtil.getImag(s, seTuPath + name);
+            if (flag){
+                successCount++;
+            }
+        }
+        log.debug("图片下载完毕：本次下载成功数量 - {}/{}", successCount, count);
     }
 
     /**

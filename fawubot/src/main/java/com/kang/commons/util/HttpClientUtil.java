@@ -3,12 +3,74 @@ package com.kang.commons.util;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.Arrays;
 
 /**
  * jdk 调用第三方接口
  * @author hsq
  */
 public class HttpClientUtil {
+
+    public static boolean getImag(String pathUrl, String filePath) {
+        try {
+            URL url = new URL(pathUrl);
+
+            //打开和url之间的连接
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            //设定请求的方法为"GET"，默认是GET
+            //post与get的不同之处在于post的参数不是放在URL字串里面，而是放在http请求的正文内。
+            conn.setRequestMethod("GET");
+
+            //设置30秒连接超时
+            conn.setConnectTimeout(60000);
+            //设置30秒读取超时
+            conn.setReadTimeout(60000);
+
+            // 设置是否向httpUrlConnection输出，因为这个是post请求，参数要放在http正文内，因此需要设为true, 默认情况下是false;
+            conn.setDoOutput(true);
+            // 设置是否从httpUrlConnection读入，默认情况下是true;
+            conn.setDoInput(true);
+
+            // Post请求不能使用缓存(get可以不使用)
+            conn.setUseCaches(false);
+
+            //设置通用的请求属性
+            conn.setRequestProperty("accept", "*/*");
+            conn.setRequestProperty("connection", "Keep-Alive");  //维持长链接
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+            conn.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+            conn.setRequestProperty("cookie", "dsdsd");
+            conn.setRequestProperty("referer", "http://www.sse.com.cn/disclosure/diclosure/public/");
+
+            //连接，从上述url.openConnection()至此的配置必须要在connect之前完成，
+            conn.connect();
+
+            InputStream is = conn.getInputStream();
+            DataInputStream dataInputStream = new DataInputStream(is);
+
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+
+            byte[] buffer = new byte[1024];
+            int length;
+
+            while ((length = dataInputStream.read(buffer)) > 0) {
+                fileOutputStream.write(buffer, 0, length);
+            }
+
+            dataInputStream.close();
+            fileOutputStream.close();
+            //关闭流
+            is.close();
+            //断开连接，disconnect是在底层tcp socket链接空闲时才切断，如果正在被其他线程使用就不切断。
+            conn.disconnect();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 
     /**
@@ -47,6 +109,9 @@ public class HttpClientUtil {
             //维持长链接
             conn.setRequestProperty("connection", "Keep-Alive");
             conn.setRequestProperty("Content-Type", "application/json;charset=utf-8");
+            conn.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+            conn.setRequestProperty("cookie", "dsdsd");
+            conn.setRequestProperty("referer", "http://www.sse.com.cn/disclosure/diclosure/public/");
 
             //连接，从上述url.openConnection()至此的配置必须要在connect之前完成，
             conn.connect();
@@ -130,6 +195,9 @@ public class HttpClientUtil {
             conn.setRequestProperty("accept", "*/*");
             conn.setRequestProperty("connection", "Keep-Alive");  //维持长链接
             conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+            conn.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+            conn.setRequestProperty("cookie", "dsdsd");
+            conn.setRequestProperty("referer", "http://www.sse.com.cn/disclosure/diclosure/public/");
 
             //连接，从上述url.openConnection()至此的配置必须要在connect之前完成，
             conn.connect();

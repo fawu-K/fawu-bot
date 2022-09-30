@@ -23,6 +23,8 @@ simbot:
 ROOT_CODE: #这里是用来管理机器人的账号，一些机器人设置只能由该账号进行设置
 #天行数据接口
 TIANAPI_KEY: #天行数据->控制台->数据管理->我的密钥KEY
+# 图片保存地址
+IMAG_PATH: #例： E:/image/
 
 #数据库配置
 MYSQL_HOST: #mysql数据库地址，例：127.0.0.1
