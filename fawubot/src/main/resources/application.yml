@@ -30,7 +30,8 @@ mybatis-plus:
 
 logging:
   level:
-    com.kang.mapper: info
+    com.kang: info
+    org.springframework.boot.autoconfigure: error
   config: classpath:logback-boot.xml
 
 # 腾讯云 配置

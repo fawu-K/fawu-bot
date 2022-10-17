@@ -5,6 +5,7 @@ import com.kang.commons.util.BotUtil;
 import com.kang.commons.util.CommonsUtils;
 import com.kang.config.PlayConfig;
 import com.kang.entity.monasticPractice.play2.*;
+import com.kang.entity.monasticPractice.play2.vo.BattleRole;
 import com.kang.entity.monasticPractice.play2.vo.EventVo;
 import com.kang.entity.monasticPractice.play2.vo.RoleVo;
 import com.kang.game.monasticPractice.service.EventService;
@@ -87,12 +88,12 @@ public class BattleListener {
      * 事件会话
      *
      * @param sessionContext 持续会话
-     * @param msgGet       信息体
+     * @param msgGet         信息体
      * @param context        会话体
      * @param eventVo        触发的事件
      * @return 持续会话返回
      */
-    private SessionCallback<?> event(MsgGet msgGet, ListenerContext context,  ContinuousSessionScopeContext sessionContext, EventVo eventVo) {
+    private SessionCallback<?> event(MsgGet msgGet, ListenerContext context, ContinuousSessionScopeContext sessionContext, EventVo eventVo) {
         //播放事件信息
         botAutoManager.sendMsg(msgGet, eventVo.toString());
 
@@ -115,12 +116,12 @@ public class BattleListener {
      * 战斗、对话、新的事件、结束等等操作
      *
      * @param sessionContext 持续会话
-     * @param msgGet       信息体
+     * @param msgGet         信息体
      * @param context        会话体
      * @param next           触发的事件
      * @return 是否有回复语
      */
-    private String toNext(MsgGet msgGet, ListenerContext context, ContinuousSessionScopeContext sessionContext, EventVo next) {
+    public String toNext(MsgGet msgGet, ListenerContext context, ContinuousSessionScopeContext sessionContext, EventVo next) {
 
         String result = null;
         String code = BotUtil.getCode(msgGet);
@@ -155,7 +156,7 @@ public class BattleListener {
      * 战斗操作
      * 获取双方的角色信息，并进行战斗操作
      *
-     * @param msgGet 消息体
+     * @param msgGet  消息体
      * @param context 会话
      */
     public void battle(MsgGet msgGet, ListenerContext context, EventVo eventVo) {
@@ -191,7 +192,7 @@ public class BattleListener {
      * @param battleRole     我方角色
      * @param battleRole1    对方角色
      * @param sessionContext 持续会话
-     * @param msgGet       信息体
+     * @param msgGet         信息体
      * @param context        会话体
      * @return 持续会话返回
      */
@@ -201,7 +202,8 @@ public class BattleListener {
             //寻找对应技能
             Skill skill = getSkill(battleRole.getSkills(), str);
             //进行技能伤害伤害
-            String killMsg = kill(battleRole, battleRole1, skill);
+            Kill kill = kill(battleRole, battleRole1, skill);
+            String killMsg = kill.getMsg();
             if ("逃跑".equals(skill.getType())) {
                 botAutoManager.sendMsg(msgGet, killMsg);
                 return;
@@ -213,16 +215,17 @@ public class BattleListener {
                 int index = (int) (Math.random() * skills.size());
                 Skill skill1 = skills.get(index);
                 //进行伤害
-                String killMsg2 = kill(battleRole1, battleRole, skill1);
+                Kill kill1 = kill(battleRole1, battleRole, skill1);
+                String killMsg1 = kill1.getMsg();
                 if ("逃跑".equals(skill1.getType())) {
-                    botAutoManager.sendMsg(msgGet, killMsg + "\n====================\n" + killMsg2);
+                    botAutoManager.sendMsg(msgGet, killMsg + "\n====================\n" + killMsg1);
                     return;
                 }
 
                 if (battleRole.getSurplusHp() > 0) {
                     //己方未被杀死
                     //播放双方伤害信息
-                    botAutoManager.sendMsg(msgGet, killMsg + "\n====================\n" + killMsg2 + "\n请选择你要使用的技能:");
+                    botAutoManager.sendMsg(msgGet, killMsg + "\n====================\n" + killMsg1 + "\n请选择你要使用的技能:");
 
                     //重新回调这个方法，再次进行战斗
                     sessionContext.waiting(BATTLE, code, battleKill(battleRole, battleRole1, sessionContext, msgGet, context, eventVo));
@@ -295,12 +298,14 @@ public class BattleListener {
     /**
      * 伤害计算，计算出伤害量，并对角色进行伤害
      * 技能的系数 * 伤害者攻击 - 被伤害者防御
+     *
      * @param battleRole  伤害者
      * @param battleRole1 被伤害者
      * @param skill       造成伤害的技能
      * @return 技能伤害信息
      */
-    private String kill(BattleRole battleRole, BattleRole battleRole1, Skill skill) {
+    public static Kill kill(BattleRole battleRole, BattleRole battleRole1, Skill skill) {
+        Kill result = new Kill();
         String killMsg = "";
         if ("伤害".equals(skill.getType())) {
             //技能造成的伤害计算
@@ -318,6 +323,7 @@ public class BattleListener {
 
             //造成的伤害信息
             killMsg = String.format("%s使用[%s]技能对%s造成[%s]点伤害。\n%s", battleRole.getName(), skill.getName(), battleRole1.getName(), kill, battleRole1);
+            result.setKillNum(kill);
         } else if ("治疗".equals(skill.getType())) {
             //获取治疗后的hp
             double surplusHp = battleRole.getSurplusHp();
@@ -330,15 +336,15 @@ public class BattleListener {
                 battleRole.setSurplusHp(hp.doubleValue());
             }
             //治疗信息
-            killMsg = String.format("%s使用[%s]技能恢复[%s]点血量。\n%s",  battleRole.getName(), skill.getName(), skill.getNum(), battleRole);
+            killMsg = String.format("%s使用[%s]技能恢复[%s]点血量。\n%s", battleRole.getName(), skill.getName(), skill.getNum(), battleRole);
         } else if ("逃跑".equals(skill.getType())) {
             killMsg = String.format("%s使用[%s]技能，撤出了战斗", battleRole.getName(), skill.getName());
         }
-
-        return killMsg;
+        result.setMsg(killMsg);
+        return result;
     }
 
-    private Skill getSkill(List<Skill> skills, String name) {
+    public static Skill getSkill(List<Skill> skills, String name) {
         Skill result = null;
         for (Skill skill : skills) {
             if (name.equals(skill.getName())) {
@@ -362,60 +368,15 @@ public class BattleListener {
         session.push(BATTLE, code, text);
     }
 
-
-    @EqualsAndHashCode(callSuper = true)
     @Data
-    public static class BattleRole extends RoleVo {
+    static class Kill{
         /**
-         * 角色的技能组
+         * 技能造成的结果信息
          */
-        private List<Skill> skills;
-
+        private String msg;
         /**
-         * 战斗时的剩余血量
+         * 技能造成的伤害数字
          */
-        private double surplusHp;
-
-        /**
-         * 状态栏
-         */
-        private List<Buff> buffs;
-
-        public BattleRole() {
-        }
-
-        public BattleRole(Role role) {
-            this();
-            BeanUtils.copyProperties(role, this);
-            this.surplusHp = role.getHp();
-            Skill skill = new Skill();
-            skill.setType("伤害");
-            skill.setName("挥拳");
-            skill.setInfo("挥出一拳");
-            skill.setNum(1);
-            skill.setCount(0);
-            this.skills = new ArrayList<>();
-            skills.add(skill);
-            this.buffs = new ArrayList<>();
-        }
-
-        public BattleRole(Role role, List<Skill> skills) {
-            this(role);
-            this.skills = skills;
-        }
-
-        @Override
-        public String toString() {
-            String result = "_________________\n" +
-                            "| [%s]\thp:%s/%s\n" +
-                            "| 攻击：%s;\t防御：%s\n" +
-                            //  "状态：%s\n" +
-                            "| 技能：%s\n" +
-                            "---------------------";
-            return String.format(result, this.getName(), surplusHp, this.getHp(), //昵称，剩余血量，总血量
-                    this.getAttack(), this.getDefe(), //攻击力，防御力
-                    //  this.getBuffs(),  //状态栏
-                    this.skills);
-        }
+        private BigDecimal killNum;
     }
 }

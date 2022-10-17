@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.kang.entity.monasticPractice.play2.Lv;
 import com.kang.entity.monasticPractice.play2.Role;
 import com.kang.entity.monasticPractice.play2.Speed;
+import com.kang.entity.monasticPractice.play2.vo.BattleRole;
 import com.kang.game.monasticPractice.service.LvService;
 import com.kang.game.monasticPractice.service.RoleService;
 import com.kang.game.monasticPractice.service.SpeedService;
@@ -50,7 +51,7 @@ public class PlayConfig {
     public PlayConfig(RoleService roleService, SpeedService speedService, LvService lvService) {
 
         log.info("加载《问大天慌》用户角色...");
-        List<Role> list = roleService.list(new QueryWrapper<>());
+        List<BattleRole> list = roleService.getList();
         list.forEach(role -> ROLE_MAP.put(role.getUserId(), role));
 
         log.info("加载先天之气信息...");

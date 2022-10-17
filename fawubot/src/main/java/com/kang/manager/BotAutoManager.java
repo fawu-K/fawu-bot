@@ -3,6 +3,7 @@ package com.kang.manager;
 import catcode.CatCodeUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.kang.Constants;
+import com.kang.commons.util.BotUtil;
 import com.kang.commons.util.HttpClientUtil;
 import com.kang.config.BotConfig;
 import com.kang.entity.Msg;
@@ -17,15 +18,15 @@ import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.message.events.MessageGet;
 import love.forte.simbot.api.message.events.MsgGet;
 import love.forte.simbot.api.message.events.PrivateMsg;
+import love.forte.simbot.api.message.results.FriendInfo;
 import love.forte.simbot.api.message.results.GroupList;
 import love.forte.simbot.api.message.results.GroupMemberInfo;
 import love.forte.simbot.api.message.results.GroupMemberList;
-import love.forte.simbot.api.sender.BotSender;
-import love.forte.simbot.api.sender.Getter;
-import love.forte.simbot.api.sender.Sender;
-import love.forte.simbot.api.sender.Setter;
+import love.forte.simbot.api.sender.*;
 import love.forte.simbot.bot.Bot;
 import love.forte.simbot.bot.BotManager;
+import love.forte.simbot.component.mirai.message.MiraiMemberAccountInfo;
+import love.forte.simbot.component.mirai.message.event.MiraiTempMsg;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -63,7 +64,17 @@ public class BotAutoManager {
         if (msgGet instanceof GroupMsg) {
             this.getSender().sendGroupMsg((GroupMsg) msgGet, msg);
         } else if (msgGet instanceof PrivateMsg) {
-            this.getSender().sendPrivateMsg(msgGet, msg);
+            String groupCode = null;
+            String accountCode;
+            if (msgGet instanceof MiraiTempMsg) {
+                MiraiTempMsg miraiTempMsg = (MiraiTempMsg) msgGet;
+                MiraiMemberAccountInfo miraiMemberAccountInfo = (MiraiMemberAccountInfo) miraiTempMsg.getAccountInfo();
+                groupCode = miraiMemberAccountInfo.getGroupCode();
+                accountCode = miraiMemberAccountInfo.getAccountCode();
+            }else {
+                accountCode = BotUtil.getCode(msgGet);
+            }
+            this.getSender().sendPrivateMsg(accountCode, groupCode, msg);
         }
     }
 

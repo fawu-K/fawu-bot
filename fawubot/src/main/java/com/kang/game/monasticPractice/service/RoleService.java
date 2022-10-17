@@ -2,9 +2,11 @@ package com.kang.game.monasticPractice.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.kang.entity.monasticPractice.play2.Role;
+import com.kang.entity.monasticPractice.play2.vo.BattleRole;
 import com.kang.entity.monasticPractice.play2.vo.RoleVo;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author K.faWu
@@ -36,4 +38,10 @@ public interface RoleService extends IService<Role> {
      * @param role
      */
     void breach(Role role);
+
+    /**
+     * 组装角色，将角色的信息，技能等级等信息组装好
+     * @return
+     */
+    List<BattleRole> getList();
 }

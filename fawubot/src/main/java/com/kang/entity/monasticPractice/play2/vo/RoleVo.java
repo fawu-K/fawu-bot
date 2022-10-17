@@ -15,19 +15,6 @@ import java.math.BigDecimal;
  **/
 @Data
 public class RoleVo extends Role {
-    public RoleVo(){
-        super();
-    }
-
-    public RoleVo(Role role, Lv lv) {
-        this();
-        BeanUtils.copyProperties(role, this);
-        this.setExpMax(lv.getExpMax());
-        this.setLvName(lv.getName());
-    }
-    public RoleVo(String accountCode, String name, String sex) {
-        super(accountCode, name, sex);
-    }
 
     /**
      *升到下一级所需要的经验
@@ -38,6 +25,21 @@ public class RoleVo extends Role {
      * 等级名称
      */
     private String lvName;
+
+    public RoleVo(){
+        super();
+    }
+
+    public RoleVo(Role role, Lv lv) {
+        this();
+        BeanUtils.copyProperties(role, this);
+        this.setExpMax(lv.getExpMax());
+        this.setLvName(lv.getName());
+    }
+
+    public RoleVo(String accountCode, String name, String sex) {
+        super(accountCode, name, sex);
+    }
 
     @Override
     public String toString() {

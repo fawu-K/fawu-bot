@@ -5,6 +5,7 @@ import com.kang.config.PlayConfig;
 import com.kang.entity.monasticPractice.play2.Role;
 import com.kang.entity.monasticPractice.play2.Speed;
 import com.kang.game.monasticPractice.service.RoleService;
+import com.kang.manager.BotAutoManager;
 import lombok.extern.slf4j.Slf4j;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.simbot.annotation.Filter;
@@ -33,6 +34,8 @@ public class MonasticPracticeListener {
 
     @Autowired
     private RoleService roleService;
+    @Autowired
+    private BotAutoManager botAutoManager;
 
     /**
      * 选择性别
@@ -66,17 +69,9 @@ public class MonasticPracticeListener {
         final SessionCallback<String> callback = SessionCallback.<String>builder().onResume(name -> {
             sender.sendPrivateMsg(privateMsg, "角色：" + name + "，请选择性别(男/女)：");
             sessionContext.waiting(SEX, accountCode, sex -> {
-                sender.sendPrivateMsg(privateMsg, "角色生成中...");
+                sender.sendPrivateMsg(accountCode, "834162807", "角色创建成功，您可以使用[内视]指令查看角色信息，使用[大荒指令]查看指令列表，愿您武运昌隆！");
                 //创建角色
-                Role role = roleService.init(accountCode, name, sex.toString());
-                Speed speed = PlayConfig.getSpeedMap(role.getGasNum());
-                //展示角色信息
-                sender.sendPrivateMsg(privateMsg, "角色创建成功：\n" +
-                        role +
-                        name + "拥有" + role.getGasNum() + "条先天之气，" +
-                        "修炼速度为每次修炼经验基础的" + speed.getSpeed() + "倍。\n" +
-                        speed.getInfo() +
-                        "\n祝君武道昌隆！");
+                roleService.init(accountCode, name, sex.toString());
             });
         }).onError(e -> System.out.println("onError 出错啦: " + e)).onCancel(e -> {
             // 这里是第一个会话，此处通过 onCancel 来处理会话被手动关闭、超时关闭的情况的处理，有些时候会与 orError 同时被触发（例如超时的时候）

@@ -1,24 +1,23 @@
 package com.kang.game.monasticPractice.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.Query;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kang.config.PlayConfig;
-import com.kang.entity.monasticPractice.play2.Lv;
-import com.kang.entity.monasticPractice.play2.Role;
-import com.kang.entity.monasticPractice.play2.Speed;
+import com.kang.entity.monasticPractice.play2.*;
+import com.kang.entity.monasticPractice.play2.vo.BattleRole;
 import com.kang.entity.monasticPractice.play2.vo.RoleVo;
 import com.kang.game.monasticPractice.mapper.RoleMapper;
+import com.kang.game.monasticPractice.mapper.RoleSkillMapper;
+import com.kang.game.monasticPractice.mapper.SkillMapper;
 import com.kang.game.monasticPractice.service.LvService;
 import com.kang.game.monasticPractice.service.RoleService;
 import com.kang.game.monasticPractice.service.SpeedService;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author K.faWu
@@ -31,11 +30,15 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     private final RoleMapper roleMapper;
     private final SpeedService speedService;
     private final LvService lvService;
+    private final RoleSkillMapper roleSkillMapper;
+    private final SkillMapper skillMapper;
 
-    public RoleServiceImpl(SpeedService speedService, LvService lvService, RoleMapper roleMapper) {
+    public RoleServiceImpl(SpeedService speedService, LvService lvService, RoleMapper roleMapper, RoleSkillMapper roleSkillMapper, SkillMapper skillMapper) {
         this.speedService = speedService;
         this.lvService = lvService;
         this.roleMapper = roleMapper;
+        this.roleSkillMapper = roleSkillMapper;
+        this.skillMapper = skillMapper;
     }
 
 
@@ -48,7 +51,19 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         QueryWrapper<Role> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", accountCode);
         role = roleMapper.selectOne(queryWrapper);
-        PlayConfig.setRoleMap(accountCode, role);
+
+        QueryWrapper<Skill> roleSkillQueryWrapper = new QueryWrapper<>();
+        roleSkillQueryWrapper.eq("quality", "0");
+        List<Skill> skills = skillMapper.selectList(roleSkillQueryWrapper);
+        for (Skill skill : skills) {
+            RoleSkill roleSkill = new RoleSkill();
+            roleSkill.setRoleId(role.getId());
+            roleSkill.setSkillId(skill.getId());
+            roleSkill.setFlag(1);
+            roleSkillMapper.insert(roleSkill);
+        }
+
+        PlayConfig.setRoleMap(accountCode, new BattleRole(role, skills));
         return role;
     }
 
@@ -113,5 +128,30 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         role.setDefe(role.getDefe() + lv.getDefe());
 
         roleMapper.updateById(role);
+    }
+
+    @Override
+    public List<BattleRole> getList() {
+        List<BattleRole> battleRoles = new ArrayList<>();
+
+        QueryWrapper<Role> roleQueryWrapper = new QueryWrapper<>();
+        roleQueryWrapper.eq("type", 1);
+        List<Role> roles = roleMapper.selectList(roleQueryWrapper);
+
+        for (Role role : roles) {
+            QueryWrapper<RoleSkill> roleSkillQueryWrapper = new QueryWrapper<>();
+            roleSkillQueryWrapper.eq("role_id", role.getId());
+            roleSkillQueryWrapper.eq("flag", 1);
+            List<RoleSkill> roleSkills = roleSkillMapper.selectList(roleSkillQueryWrapper);
+
+            List<Long> ids = new ArrayList<>();
+            roleSkills.forEach(roleSkill -> ids.add(roleSkill.getSkillId()));
+            QueryWrapper<Skill> skillQueryWrapper = new QueryWrapper<>();
+            skillQueryWrapper.in("id", ids);
+            List<Skill> skills = skillMapper.selectList(skillQueryWrapper);
+
+            battleRoles.add(new BattleRole(role, skills));
+        }
+        return battleRoles;
     }
 }

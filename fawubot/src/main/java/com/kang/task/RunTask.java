@@ -2,6 +2,7 @@ package com.kang.task;
 
 import com.kang.entity.ScheduleTime;
 import com.kang.web.service.ScheduleTimeService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationContext;
@@ -17,6 +18,7 @@ import java.util.List;
  * @description:
  * @create 2022-09-15 14:48
  **/
+@Slf4j
 @Component
 public class RunTask implements ApplicationRunner {
 
@@ -36,18 +38,16 @@ public class RunTask implements ApplicationRunner {
      * 通过数据库中存储的scheduleName字段和isActive字段对需要启动的定时任务进行启动
      */
     @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments args) {
         List<ScheduleTime> list = scheduleTimeService.getByIsActive(true);
         for (ScheduleTime scheduleTime : list) {
-            //获取springbean中存储的定时任务实例
-            Object scheduleTask = applicationContext.getBean(scheduleTime.getScheduleName());
-            Class<?> clazz = scheduleTask.getClass();
+            //获取spring bean中存储的定时任务实例
             try {
-                // 获取该实例对应的启动方法并进行启动
-                Method onOrReleaseTask = clazz.getMethod("onOrReleaseTask");
-                onOrReleaseTask.invoke(scheduleTask);
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                ScheduleTask scheduleTask = (ScheduleTask) applicationContext.getBean(scheduleTime.getScheduleName());
+                scheduleTask.onOrReleaseTask();
+            }catch (Exception e) {
                 e.printStackTrace();
+                log.warn("定时任务java文件不存在：{} - {}", scheduleTime.getScheduleName(), scheduleTime.getScheduleDes());
             }
         }
     }
