@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.kang.entity.monasticPractice.play2.Event;
 import com.kang.entity.monasticPractice.play2.vo.EventVo;
 
+import java.util.List;
+
 /**
  * @author K.faWu
  * @program fawu-bot
@@ -26,4 +28,10 @@ public interface EventService extends IService<Event> {
      * @return 下个事件
      */
     EventVo toNext(Long eventId, String plan);
+
+    /**
+     * 获取全部的BOSS列表
+     * @return BOSS列表
+     */
+    List<Event> getBossList();
 }

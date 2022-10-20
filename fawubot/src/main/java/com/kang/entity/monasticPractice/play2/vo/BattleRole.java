@@ -1,12 +1,14 @@
 package com.kang.entity.monasticPractice.play2.vo;
 
 import com.kang.entity.monasticPractice.play2.Buff;
+import com.kang.entity.monasticPractice.play2.Equipment;
 import com.kang.entity.monasticPractice.play2.Role;
 import com.kang.entity.monasticPractice.play2.Skill;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.beans.BeanUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,9 +22,14 @@ public class BattleRole extends RoleVo {
     private List<Skill> skills;
 
     /**
+     * 角色穿戴的装备
+     */
+    private List<Equipment> equipmentList;
+
+    /**
      * 战斗时的剩余血量
      */
-    private double surplusHp;
+    private BigDecimal surplusHp;
 
     /**
      * 状态栏
@@ -60,6 +67,42 @@ public class BattleRole extends RoleVo {
     public BattleRole(Role role, List<Skill> skills) {
         this(role);
         this.skills = skills;
+    }
+
+    public BattleRole(Role role, List<Skill> skills, List<Equipment> equipmentList) {
+        this(role,skills);
+        this.equipmentList = equipmentList;
+    }
+
+    /**
+     * 血量、攻击力、防御力改为角色基础加上装备加持
+     * @return
+     */
+    @Override
+    public BigDecimal getHp() {
+        BigDecimal hp = super.getHp();
+        for (Equipment equipment : equipmentList) {
+            hp = hp.add(equipment.getHp());
+        }
+        return hp;
+    }
+
+    @Override
+    public BigDecimal getAttack() {
+        BigDecimal attack = super.getAttack();
+        for (Equipment equipment : equipmentList) {
+            attack = attack.add(equipment.getAttack());
+        }
+        return attack;
+    }
+
+    @Override
+    public BigDecimal getDefe() {
+        BigDecimal defe = super.getDefe();
+        for (Equipment equipment : equipmentList) {
+            defe = defe.add(equipment.getDefe());
+        }
+        return defe;
     }
 
     @Override

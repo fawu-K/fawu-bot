@@ -1,8 +1,8 @@
 package com.kang.game.monasticPractice.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.Query;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kang.commons.util.CommonsUtils;
 import com.kang.config.PlayConfig;
 import com.kang.entity.monasticPractice.play2.*;
 import com.kang.entity.monasticPractice.play2.vo.BattleRole;
@@ -111,23 +111,30 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     /**
      * 突破到新的等级
      * @param role
+     * @return
      */
     @Override
-    public void breach(Role role) {
+    public String breach(Role role) {
+        int lvNum = role.getLv() + 1;
+        Lv lvMap = PlayConfig.getLvMap(role.getLvType(), lvNum);
+        if (CommonsUtils.isEmpty(lvMap)) {
+            return "您已经达到当前修炼等级巅峰，请等待世界开放后继续修炼。";
+        }
         Lv lv = PlayConfig.getLvMap(role.getLvType(), role.getLv());
 
         //经验清零
         role.setExp(new BigDecimal(0));
         //等级+1
-        role.setLv(role.getLv() + 1);
+        role.setLv(lvNum);
         //血量增加
-        role.setHp(role.getHp() + lv.getHp());
+        role.setHp(role.getHp().add(lv.getHp()));
         //攻击力增加
-        role.setAttack(role.getAttack() + lv.getAttack());
+        role.setAttack(role.getAttack().add(lv.getAttack()));
         //防御力增加
-        role.setDefe(role.getDefe() + lv.getDefe());
+        role.setDefe(role.getDefe().add(lv.getDefe()));
 
         roleMapper.updateById(role);
+        return null;
     }
 
     @Override
@@ -139,6 +146,14 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         List<Role> roles = roleMapper.selectList(roleQueryWrapper);
 
         for (Role role : roles) {
+            battleRoles.add(getBattleRole(role));
+        }
+        return battleRoles;
+    }
+
+    @Override
+    public BattleRole getBattleRole(Role role) {
+        if (CommonsUtils.isNotEmpty(role)) {
             QueryWrapper<RoleSkill> roleSkillQueryWrapper = new QueryWrapper<>();
             roleSkillQueryWrapper.eq("role_id", role.getId());
             roleSkillQueryWrapper.eq("flag", 1);
@@ -150,8 +165,25 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             skillQueryWrapper.in("id", ids);
             List<Skill> skills = skillMapper.selectList(skillQueryWrapper);
 
-            battleRoles.add(new BattleRole(role, skills));
+            QueryWrapper<Lv> lvQueryWrapper = new QueryWrapper<>();
+            lvQueryWrapper.eq("lv", role.getLv());
+            lvQueryWrapper.eq("type", role.getLvType());
+            Lv lv = lvService.getOne(lvQueryWrapper);
+
+            return new BattleRole(new RoleVo(role, lv), skills);
+        } else {
+            return null;
         }
-        return battleRoles;
+    }
+
+    @Override
+    public BattleRole getBattleRole(Long id) {
+        return getBattleRole(id.toString());
+    }
+
+    @Override
+    public BattleRole getBattleRole(String id) {
+        Role role = roleMapper.selectById(id);
+        return getBattleRole(role);
     }
 }

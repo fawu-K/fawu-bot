@@ -209,7 +209,7 @@ public class BattleListener {
                 return;
             }
 
-            if (battleRole1.getSurplusHp() > 0) {
+            if (battleRole1.getSurplusHp().compareTo(BigDecimal.ZERO) > 0) {
                 //对方并未被杀死，则对方进行攻击 随机抽一个技能使用
                 List<Skill> skills = battleRole1.getSkills();
                 int index = (int) (Math.random() * skills.size());
@@ -222,7 +222,7 @@ public class BattleListener {
                     return;
                 }
 
-                if (battleRole.getSurplusHp() > 0) {
+                if (battleRole.getSurplusHp().compareTo(BigDecimal.ZERO) > 0) {
                     //己方未被杀死
                     //播放双方伤害信息
                     botAutoManager.sendMsg(msgGet, killMsg + "\n====================\n" + killMsg1 + "\n请选择你要使用的技能:");
@@ -309,15 +309,15 @@ public class BattleListener {
         String killMsg = "";
         if ("伤害".equals(skill.getType())) {
             //技能造成的伤害计算
-            BigDecimal kill = BigDecimal.valueOf(skill.getNum()).multiply(BigDecimal.valueOf(battleRole.getAttack())).subtract(BigDecimal.valueOf(battleRole1.getDefe()));
+            BigDecimal kill = BigDecimal.valueOf(skill.getNum()).multiply(battleRole.getAttack()).subtract(battleRole1.getDefe());
             //伤害最低造成1点
             if (kill.compareTo(BigDecimal.ZERO) <= 0) {
                 kill = new BigDecimal("1");
             }
             //扣除后剩余的血量
-            double surplusHp = BigDecimal.valueOf(battleRole1.getSurplusHp()).subtract(kill).doubleValue();
-            if (surplusHp <= 0) {
-                surplusHp = 0;
+            BigDecimal surplusHp = battleRole1.getSurplusHp().subtract(kill);
+            if (surplusHp.compareTo(BigDecimal.ZERO) <= 0) {
+                surplusHp = BigDecimal.ZERO;
             }
             battleRole1.setSurplusHp(surplusHp);
 
@@ -326,14 +326,14 @@ public class BattleListener {
             result.setKillNum(kill);
         } else if ("治疗".equals(skill.getType())) {
             //获取治疗后的hp
-            double surplusHp = battleRole.getSurplusHp();
-            BigDecimal hp = BigDecimal.valueOf(surplusHp).add(BigDecimal.valueOf(skill.getNum()));
+            BigDecimal surplusHp = battleRole.getSurplusHp();
+            BigDecimal hp = surplusHp.add(BigDecimal.valueOf(skill.getNum()));
 
             //判断治疗后是否超出上线
-            if (battleRole.getHp() <= hp.doubleValue()) {
+            if (battleRole.getHp().compareTo(hp) <= 0) {
                 battleRole.setSurplusHp(battleRole.getHp());
             } else {
-                battleRole.setSurplusHp(hp.doubleValue());
+                battleRole.setSurplusHp(hp);
             }
             //治疗信息
             killMsg = String.format("%s使用[%s]技能恢复[%s]点血量。\n%s", battleRole.getName(), skill.getName(), skill.getNum(), battleRole);

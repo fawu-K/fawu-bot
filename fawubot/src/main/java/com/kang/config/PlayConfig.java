@@ -105,12 +105,10 @@ public class PlayConfig {
      * 获取指定先天之气对应的修炼关系
      * @return 修炼关系
      */
-    @NotNull
     public static Speed getSpeedMap(Long id) {
         return speedMap.get(id);
     }
 
-    @NotNull
     public static Speed getSpeedMap(Integer id) {
         return speedMap.get(id.longValue());
     }
@@ -129,7 +127,6 @@ public class PlayConfig {
      * @param lv 等级
      * @return 等级信息
      */
-    @NotNull
     public static Lv getLvMap(String type, int lv) {
         return lvMap.get(lv + type);
     }

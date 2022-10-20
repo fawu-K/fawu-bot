@@ -32,15 +32,15 @@ public class Lv {
     /**
      * 当升到下一级时增加的血量
      */
-    private Integer hp;
+    private BigDecimal hp;
     /**
      * 当升到下一级时增加的攻击力
      */
-    private Integer attack;
+    private BigDecimal attack;
     /**
      * 防御
      */
-    private Integer defe;
+    private BigDecimal defe;
     /**
      * 每次增加的基础经验
      */

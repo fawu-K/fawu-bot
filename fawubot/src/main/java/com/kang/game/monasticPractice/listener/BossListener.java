@@ -4,6 +4,7 @@ import catcode.CatCodeUtil;
 import com.kang.commons.util.BotUtil;
 import com.kang.commons.util.CommonsUtils;
 import com.kang.config.PlayConfig;
+import com.kang.entity.monasticPractice.play2.Event;
 import com.kang.entity.monasticPractice.play2.Role;
 import com.kang.entity.monasticPractice.play2.Skill;
 import com.kang.entity.monasticPractice.play2.vo.BattleRole;
@@ -43,11 +44,9 @@ import java.util.*;
 @Beans
 @Component
 public class BossListener {
-
-    public static BattleRole killBossRole = null;
+    public static Event bossEvent = null;
     public static BattleRole boss = null;
-
-
+    public static BattleRole killBossRole = null;
     public static final Map<BattleRole, BigDecimal> KILL_MAP = new HashMap<>();
 
     public static final String BATTLE = "战斗";
@@ -59,19 +58,10 @@ public class BossListener {
     @Autowired
     private EventService eventService;
 
-    public BossListener(){
-        Role role = new Role();
-        role.setName("boss");
-        role.setHp(120);
-        role.setAttack(100);
-        role.setDefe(50);
-        boss = new BattleRole(role);
-    }
-
     @OnGroup
     @Filter(value = "#", matchType = MatchType.STARTS_WITH)
     public void battle(MsgGet msgGet, ListenerContext context) {
-        if (boss == null) {
+        if (boss == null || boss.getSurplusHp().compareTo(BigDecimal.ZERO) <= 0) {
             botAutoManager.sendMsg(msgGet, "Boss已消失，请下次再进行挑战~");
             return;
         }
@@ -81,7 +71,7 @@ public class BossListener {
         String at = CatCodeUtil.getInstance().getStringTemplate().at(code);
 
         //判断角色阵亡状态
-        if (battleRole.getSurplusHp() <= 0) {
+        if (battleRole.getSurplusHp().compareTo(BigDecimal.ZERO) <= 0) {
             if (battleRole.getRestartTime().getTime() > System.currentTimeMillis()) {
                 long time = battleRole.getRestartTime().getTime() - System.currentTimeMillis();
                 time = time/1000;
@@ -112,7 +102,7 @@ public class BossListener {
 
         String killMsg = kill.getMsg();
         String killMsg1 = "";
-        if (boss.getSurplusHp() > 0) {
+        if (boss.getSurplusHp().compareTo(BigDecimal.ZERO) > 0) {
             //对方并未被杀死，则对方进行攻击 随机抽一个技能使用
             List<Skill> skills = boss.getSkills();
             int index = (int) (Math.random() * skills.size());
@@ -122,7 +112,7 @@ public class BossListener {
             killMsg1 = kill1.getMsg();
 
             //表示角色被击败
-             if (battleRole.getSurplusHp() <= 0) {
+             if (battleRole.getSurplusHp().compareTo(BigDecimal.ZERO) <= 0) {
                  battleRole.setOutTime(new Date());
                  long time = System.currentTimeMillis() + 1000 * 30;
                  battleRole.setRestartTime(new Date(time));
@@ -131,7 +121,6 @@ public class BossListener {
         } else {
             //boss被击败
             killMsg1 = String.format("%s被击败了！\n[%s]对boss造成的最后一击！", boss.getName(), battleRole.getName());
-            boss = null;
             killBossRole = battleRole;
         }
         //播放双方伤害信息
@@ -141,7 +130,7 @@ public class BossListener {
     }
 
     @OnGroup
-    @Filter(value = ".排行", matchType = MatchType.STARTS_WITH)
+    @Filter(value = ".排行", matchType = MatchType.EQUALS)
     public void killNumRanking(MsgGet msgGet){
         List<BossBattleRole> list = new ArrayList<>();
         Set<BattleRole> battleRoles = KILL_MAP.keySet();
@@ -157,5 +146,11 @@ public class BossListener {
             }
         }
         botAutoManager.sendMsg(msgGet, msg.toString());
+    }
+
+    @OnGroup
+    @Filter(value = ".BOSS", matchType = MatchType.EQUALS)
+    public void getBoss(MsgGet msgGet) {
+        botAutoManager.sendMsg(msgGet, boss.toString());
     }
 }

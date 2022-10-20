@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kang.game.monasticPractice.mapper.EquipmentMapper">
+  <resultMap id="BaseResultMap" type="com.kang.entity.monasticPractice.play2.Equipment">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="type" jdbcType="VARCHAR" property="type" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="quality" jdbcType="VARCHAR" property="quality" />
+    <result column="attack" jdbcType="DOUBLE" property="attack" />
+    <result column="defe" jdbcType="DOUBLE" property="defe" />
+    <result column="hp" jdbcType="DOUBLE" property="hp" />
+    <result column="info" jdbcType="VARCHAR" property="info" />
+    <result column="lv_min" jdbcType="INTEGER" property="lvMin" />
+    <result column="lv_type" jdbcType="VARCHAR" property="lvType" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, `type`, `name`, quality, attack, defe, hp, info, lv_min, lv_type
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from equipment
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from equipment
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.kang.entity.monasticPractice.play2.Equipment" useGeneratedKeys="true">
+    insert into equipment (`type`, `name`, quality,
+      attack, defe, hp, info,
+      lv_min, lv_type)
+    values (#{type,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{quality,jdbcType=VARCHAR},
+      #{attack,jdbcType=DOUBLE}, #{defe,jdbcType=DOUBLE}, #{hp,jdbcType=DOUBLE}, #{info,jdbcType=VARCHAR},
+      #{lvMin,jdbcType=INTEGER}, #{lvType,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.kang.entity.monasticPractice.play2.Equipment" useGeneratedKeys="true">
+    insert into equipment
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="type != null">
+        `type`,
+      </if>
+      <if test="name != null">
+        `name`,
+      </if>
+      <if test="quality != null">
+        quality,
+      </if>
+      <if test="attack != null">
+        attack,
+      </if>
+      <if test="defe != null">
+        defe,
+      </if>
+      <if test="hp != null">
+        hp,
+      </if>
+      <if test="info != null">
+        info,
+      </if>
+      <if test="lvMin != null">
+        lv_min,
+      </if>
+      <if test="lvType != null">
+        lv_type,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="type != null">
+        #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="quality != null">
+        #{quality,jdbcType=VARCHAR},
+      </if>
+      <if test="attack != null">
+        #{attack,jdbcType=DOUBLE},
+      </if>
+      <if test="defe != null">
+        #{defe,jdbcType=DOUBLE},
+      </if>
+      <if test="hp != null">
+        #{hp,jdbcType=DOUBLE},
+      </if>
+      <if test="info != null">
+        #{info,jdbcType=VARCHAR},
+      </if>
+      <if test="lvMin != null">
+        #{lvMin,jdbcType=INTEGER},
+      </if>
+      <if test="lvType != null">
+        #{lvType,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.kang.entity.monasticPractice.play2.Equipment">
+    update equipment
+    <set>
+      <if test="type != null">
+        `type` = #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        `name` = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="quality != null">
+        quality = #{quality,jdbcType=VARCHAR},
+      </if>
+      <if test="attack != null">
+        attack = #{attack,jdbcType=DOUBLE},
+      </if>
+      <if test="defe != null">
+        defe = #{defe,jdbcType=DOUBLE},
+      </if>
+      <if test="hp != null">
+        hp = #{hp,jdbcType=DOUBLE},
+      </if>
+      <if test="info != null">
+        info = #{info,jdbcType=VARCHAR},
+      </if>
+      <if test="lvMin != null">
+        lv_min = #{lvMin,jdbcType=INTEGER},
+      </if>
+      <if test="lvType != null">
+        lv_type = #{lvType,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.kang.entity.monasticPractice.play2.Equipment">
+    update equipment
+    set `type` = #{type,jdbcType=VARCHAR},
+      `name` = #{name,jdbcType=VARCHAR},
+      quality = #{quality,jdbcType=VARCHAR},
+      attack = #{attack,jdbcType=DOUBLE},
+      defe = #{defe,jdbcType=DOUBLE},
+      hp = #{hp,jdbcType=DOUBLE},
+      info = #{info,jdbcType=VARCHAR},
+      lv_min = #{lvMin,jdbcType=INTEGER},
+      lv_type = #{lvType,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>

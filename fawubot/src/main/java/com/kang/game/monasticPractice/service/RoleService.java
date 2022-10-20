@@ -36,12 +36,34 @@ public interface RoleService extends IService<Role> {
     /**
      * 突破到新的等级
      * @param role
+     * @return
      */
-    void breach(Role role);
+    String breach(Role role);
 
     /**
      * 组装角色，将角色的信息，技能等级等信息组装好
      * @return
      */
     List<BattleRole> getList();
+
+    /**
+     * 根据角色id获取组装好的战斗角色信息
+     * @param role 角色id
+     * @return 战斗信息
+     */
+    BattleRole getBattleRole(Role role);
+
+    /**
+     * 根据角色id获取组装好的战斗角色信息
+     * @param id 角色id
+     * @return 战斗信息
+     */
+    BattleRole getBattleRole(Long id);
+
+    /**
+     * 根据角色id获取组装好的战斗角色信息
+     * @param id 角色id
+     * @return 战斗信息
+     */
+    BattleRole getBattleRole(String id);
 }

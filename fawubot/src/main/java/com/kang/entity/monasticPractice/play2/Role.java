@@ -37,15 +37,15 @@ public class Role {
     /**
      * 血量
      */
-    private Integer hp;
+    private BigDecimal hp;
     /**
      * 攻击力
      */
-    private Integer attack;
+    private BigDecimal attack;
     /**
      * 防御
      */
-    private Integer defe;
+    private BigDecimal defe;
     /**
      * 类别：玩家角色；npc角色
      */
@@ -73,9 +73,9 @@ public class Role {
         this.sex = "男".equals(sex)? 1: 0;
         this.lv = 0;
         this.exp = new BigDecimal(0);
-        this.hp = 10;
-        this.attack = 5;
-        this.defe = 2;
+        this.hp = new BigDecimal(10);
+        this.attack = new BigDecimal(5);
+        this.defe = new BigDecimal(2);
         this.type = 1;
         this.lvType = "无";
     }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kang.game.monasticPractice.mapper.EventPlanMapper">
+  <resultMap id="BaseResultMap" type="com.kang.entity.monasticPractice.play2.EventPlan">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="event_id" jdbcType="BIGINT" property="eventId" />
+    <result column="plan" jdbcType="VARCHAR" property="plan" />
+    <result column="trigger_event_id" jdbcType="BIGINT" property="triggerEventId" />
+    <result column="lv_min" jdbcType="INTEGER" property="lvMin" />
+    <result column="condition" jdbcType="VARCHAR" property="condition" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, event_id, `plan`, trigger_event_id, lv_min, `condition`
+  </sql>
+</mapper>

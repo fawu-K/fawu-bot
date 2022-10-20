@@ -1,39 +1,33 @@
 package com.kang.manager;
 
-import catcode.CatCodeUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.kang.Constants;
 import com.kang.commons.util.BotUtil;
-import com.kang.commons.util.HttpClientUtil;
-import com.kang.config.BotConfig;
 import com.kang.entity.Msg;
 import com.kang.entity.ResultByQq;
 import com.kang.web.service.ResultByQqService;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.common.ioc.annotation.Depend;
 import love.forte.simbot.api.message.MessageContent;
+import love.forte.simbot.api.message.MessageContentBuilderFactory;
 import love.forte.simbot.api.message.containers.BotInfo;
 import love.forte.simbot.api.message.containers.GroupInfo;
 import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.message.events.MessageGet;
 import love.forte.simbot.api.message.events.MsgGet;
 import love.forte.simbot.api.message.events.PrivateMsg;
-import love.forte.simbot.api.message.results.FriendInfo;
 import love.forte.simbot.api.message.results.GroupList;
 import love.forte.simbot.api.message.results.GroupMemberInfo;
 import love.forte.simbot.api.message.results.GroupMemberList;
 import love.forte.simbot.api.sender.*;
 import love.forte.simbot.bot.Bot;
 import love.forte.simbot.bot.BotManager;
-import love.forte.simbot.component.mirai.message.MiraiMemberAccountInfo;
+import love.forte.simbot.component.mirai.message.*;
 import love.forte.simbot.component.mirai.message.event.MiraiTempMsg;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @program: service
@@ -49,6 +43,9 @@ public class BotAutoManager {
     private BotManager botManager;
     @Autowired
     private ResultByQqService resultByQqService;
+    @Depend
+    @Autowired
+    private MessageContentBuilderFactory factory;
 
 
     public Setter getSetter() {
@@ -56,26 +53,88 @@ public class BotAutoManager {
     }
 
     /**
+     * 组装合并消息
+     * @param msgGet 消息发送方
+     * @param builder 组装的消息体
+     * @param msgs 要组装的消息们
+     * @return 组装的消息体
+     */
+    private MiraiMessageContentBuilder saveForwardMessage(MsgGet msgGet, MiraiMessageContentBuilder builder, Object... msgs) {
+        String code = msgGet.getAccountInfo().getAccountCode();
+        long codeNumber = msgGet.getAccountInfo().getAccountCodeNumber();
+        // 通过 MiraiMessageContentBuilder.forwardMessage 构建一个合并消息。
+        // 一般来讲，合并消息不支持与其他类型消息同时存在，因此不应再继续拼接其他消息。
+        builder.forwardMessage(forwardBuilder -> {
+            // 常见的前三个参数：发送者账号、发送者名称，发送时间（秒时间戳）
+            // 最后一个（第四个）参数则为发送的消息
+            for (Object msg : msgs) {
+                saveForwardBuilder(msgGet, forwardBuilder, msg);
+            }
+            // 注意：ALPHA版本中，下述内容要在ALPHA.6之后的版本（不包含.6）才会有
+            forwardBuilder.add(codeNumber, code, 3000, "");
+        });
+        return builder;
+    }
+
+    private void saveForwardBuilder(MsgGet msgGet, MiraiForwardMessageBuilder forwardBuilder, Object msg) {
+       if (msg instanceof MessageContent) {
+            forwardBuilder.add(msgGet, 3000, (MessageContent) msg);
+        } else if (msg instanceof MessageGet) {
+           forwardBuilder.add(msgGet, 3000, (MessageGet) msg);
+        } else {
+           forwardBuilder.add(msgGet, 3000, msg.toString());
+       }
+    }
+
+    /**
+     * 组装合并消息
+     * @return 组装的消息体
+     */
+    public MiraiMessageContent saveForwardMessage(MsgGet msgGet, Object... msgs) {
+        if (!(factory instanceof MiraiMessageContentBuilderFactory)) {
+            throw new RuntimeException("不支持mirai组件");
+        }
+
+        MiraiMessageContentBuilder builder = ((MiraiMessageContentBuilderFactory) factory).getMessageContentBuilder();
+        return saveForwardMessage(msgGet, builder, msgs).build();
+    }
+
+    /**
+     * 发送合并消息
+     */
+    public void sendForwardMessage(MsgGet msgGet, Object... msgs) {
+        MiraiMessageContent messageContent = this.saveForwardMessage(msgGet, msgs);
+        sendMsg(msgGet, messageContent);
+    }
+
+    /**
      * 根据接受信息的类型来判断是群消息还是私聊消息
-     * @param msgGet
-     * @param msg
      */
     public void sendMsg(MsgGet msgGet, String msg) {
+        String botCode = msgGet.getBotInfo().getBotCode();
+        Sender sender = this.getSender(botCode);
+
         if (msgGet instanceof GroupMsg) {
-            this.getSender().sendGroupMsg((GroupMsg) msgGet, msg);
-        } else if (msgGet instanceof PrivateMsg) {
+            sender.sendGroupMsg((GroupMsg) msgGet, msg);
+        } else {
             String groupCode = null;
             String accountCode;
+            //判断是否为非好友，若是非好友则需要通过群发送消息
             if (msgGet instanceof MiraiTempMsg) {
                 MiraiTempMsg miraiTempMsg = (MiraiTempMsg) msgGet;
                 MiraiMemberAccountInfo miraiMemberAccountInfo = (MiraiMemberAccountInfo) miraiTempMsg.getAccountInfo();
                 groupCode = miraiMemberAccountInfo.getGroupCode();
-                accountCode = miraiMemberAccountInfo.getAccountCode();
-            }else {
-                accountCode = BotUtil.getCode(msgGet);
             }
-            this.getSender().sendPrivateMsg(accountCode, groupCode, msg);
+            accountCode = BotUtil.getCode(msgGet);
+            sender.sendPrivateMsg(accountCode, groupCode, msg);
         }
+    }
+
+    /**
+     * 根据接受信息的类型来判断是群消息还是私聊消息
+     */
+    public void sendMsg(MsgGet msgGet, MessageContent msg) {
+        this.sendMsg(msgGet, msg.getMsg());
     }
 
     /**

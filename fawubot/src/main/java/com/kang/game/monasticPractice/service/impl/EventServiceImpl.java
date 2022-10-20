@@ -58,6 +58,13 @@ public class EventServiceImpl extends ServiceImpl<EventMapper, Event> implements
         return eventVo;
     }
 
+    @Override
+    public List<Event> getBossList() {
+        QueryWrapper<Event> eventQueryWrapper = new QueryWrapper<>();
+        eventQueryWrapper.eq("type", "BOSS");
+        return eventMapper.selectList(eventQueryWrapper);
+    }
+
     /**
      * 获取事件选项
      * @param eventVo 事件

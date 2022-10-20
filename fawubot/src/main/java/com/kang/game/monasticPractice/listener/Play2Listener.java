@@ -141,13 +141,13 @@ public class Play2Listener {
      */
     private void toBreach(MsgGet msg, Role role) {
         //将角色更新到新的等级
-        roleService.breach(role);
+        String breach = roleService.breach(role);
 
         Lv lv = PlayConfig.getLvMap(role.getLvType(), role.getLv());
         Speed speed = PlayConfig.getSpeedMap(role.getGasNum());
         //等级没有更高的等级
-        if (CommonsUtils.isEmpty(lv)) {
-            botAutoManager.sendMsg(msg, "您已经达到当前修炼等级巅峰，请等待世界开放后继续修炼。");
+        if (CommonsUtils.isNotEmpty(breach)) {
+            botAutoManager.sendMsg(msg, breach);
             return;
         }
 

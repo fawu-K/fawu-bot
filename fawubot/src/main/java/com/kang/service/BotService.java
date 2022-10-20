@@ -5,11 +5,23 @@ import catcode.Neko;
 import com.alibaba.fastjson.JSONObject;
 import com.kang.Constants;
 import com.kang.commons.util.BotUtil;
+import com.kang.commons.util.CommonsUtils;
 import com.kang.commons.util.GifUtil;
 import com.kang.commons.util.HttpClientUtil;
 import com.kang.config.BotConfig;
+import com.kang.entity.GroupState;
+import com.kang.entity.monasticPractice.play2.Event;
+import com.kang.entity.monasticPractice.play2.Role;
+import com.kang.entity.monasticPractice.play2.vo.BattleRole;
+import com.kang.entity.monasticPractice.play2.vo.BossBattleRole;
+import com.kang.entity.monasticPractice.play2.vo.EventVo;
+import com.kang.game.monasticPractice.listener.BossListener;
+import com.kang.game.monasticPractice.service.EventService;
+import com.kang.game.monasticPractice.service.RoleService;
 import com.kang.listener.GroupListener;
 import com.kang.manager.BotAutoManager;
+import com.kang.web.service.GroupStateService;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import love.forte.common.ioc.annotation.Beans;
 import love.forte.common.ioc.annotation.Depend;
@@ -28,9 +40,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static java.awt.SystemColor.text;
 
@@ -52,6 +66,12 @@ public class BotService {
     private BotAutoManager botAutoManager;
     @Autowired
     private TianApiTool tianApiTool;
+    @Autowired
+    private RoleService roleService;
+    @Autowired
+    private GroupStateService groupStateService;
+    @Autowired
+    private EventService eventService;
 
     /**
      * 群聊中被at后进行的操作
@@ -262,5 +282,135 @@ public class BotService {
             }
         }
         return str;
+    }
+
+    /**
+     * 根据事件生成Boss
+     * @param event boss事件
+     */
+    public void toBoss(Event event) {
+        // 需要将上次击杀Boss的奖励发放
+        if (BossListener.boss != null) {
+            reward();
+        }
+
+        BattleRole boss = roleService.getBattleRole(event.getPlace());
+        if (CommonsUtils.isNotEmpty(boss)) {
+            //触发Boss的事件
+            BossListener.bossEvent = event;
+            //赋予Boss
+            BossListener.boss = boss;
+            //清空伤害列表
+            BossListener.KILL_MAP.clear();
+            //清空斩杀人员信息
+            BossListener.killBossRole = null;
+
+            //将boss出现的信息通知到各个拥有游戏角色的群里
+            String msg = String.format("%s\n世界级Boss已经出现！各位豪杰开始你们的讨伐之战吧！\n1、使用[#+技能名称]攻击BOSS\n2、使用查看Boss信息以及对Boss可以使用的指令", event.getInfo());
+            sendMsg(msg);
+        }
+    }
+
+    private void reward(){
+        StringBuilder msg = new StringBuilder("[" + BossListener.boss.getName() + "]Boss讨伐奖励已发放:");
+        EventVo killBossEvent = eventService.toNext(BossListener.bossEvent.getId(), "BOSS击杀奖励");
+        EventVo killRankingBossEvent = eventService.toNext(BossListener.bossEvent.getId(), "BOSS排行奖励");
+        List<RewardCoefficient> rewardCoefficient = getRewardCoefficient();
+        List<BossBattleRole> list = new ArrayList<>();
+        Set<BattleRole> battleRoles = BossListener.KILL_MAP.keySet();
+        battleRoles.forEach(battleRole -> list.add(new BossBattleRole(battleRole, BossListener.KILL_MAP.get(battleRole))));
+        // 排序
+        list.sort((o1, o2) -> o2.getKillNum().compareTo(o1.getKillNum()));
+
+        // 伤害排行奖励
+        BigDecimal reward = new BigDecimal(killRankingBossEvent.getPlace());
+        for (int i = 0, listSize = list.size(); i < listSize; i++) {
+            for (RewardCoefficient coefficient : rewardCoefficient) {
+                if (coefficient.getRanking() >= i+1) {
+                    BossBattleRole bossBattleRole = list.get(i);
+                    //获取经验奖励，boss的基础经验 * 奖励系数
+                    BigDecimal exp = reward.multiply(coefficient.getCoefficient());
+                    msg.append(String.format("\n%s.[%s] --- %sexp", i + 1, bossBattleRole.getName(), exp));
+                    exp = bossBattleRole.getExp().add(exp);
+                    addExp(bossBattleRole, exp);
+                    break;
+                }
+            }
+        }
+
+        // 最终击杀奖励
+        BigDecimal reward1 = new BigDecimal(killBossEvent.getPlace());
+        BigDecimal exp = BossListener.killBossRole.getExp().add(reward1);
+        msg.append("最终击杀奖励：\n").append(String.format("\n[%s] --- %sexp", BossListener.killBossRole.getName(), exp));
+        //判断经验是否升级
+        addExp(BossListener.killBossRole, exp);
+
+        //将boss出现的信息通知到各个拥有游戏角色的群里
+        sendMsg(msg.toString());
+
+    }
+
+    private void sendMsg(String msg){
+        for (GroupState groupState : groupStateService.getAll()) {
+            if (groupState.getState() == 1) {
+                try {
+                    botAutoManager.getSender().sendGroupMsg(groupState.getCode(), msg);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error("向{}消息发送失败！{}", groupState.getCode(), msg);
+                }
+            }
+        }
+    }
+
+    private void addExp(BattleRole bossBattleRole, BigDecimal exp){
+        //判断经验是否升级
+        while (exp.compareTo(bossBattleRole.getExpMax()) >= 0) {
+            exp = exp.subtract(bossBattleRole.getExpMax());
+            String breach = roleService.breach(bossBattleRole);
+            if (CommonsUtils.isNotEmpty(breach)) {
+                bossBattleRole.setExp(bossBattleRole.getExpMax());
+                log.debug("角色[{}]已提升到最高等级", bossBattleRole.getName());
+                return;
+            }
+        }
+        bossBattleRole.setExp(exp);
+    }
+
+    /**
+     * 1    15
+     * 2    13
+     * 3    12
+     * 4    11
+     * 5名  10
+     * 6-10发放8倍经验
+     * 11-25  6倍
+     * 26-50  4倍奖励
+     * 51-100 双倍奖励
+     * 100以后发放普通奖励
+     */
+    public List<RewardCoefficient> getRewardCoefficient(){
+        List<RewardCoefficient> list = new ArrayList<>();
+        list.add(new RewardCoefficient(1L, new BigDecimal("15")));
+        list.add(new RewardCoefficient(2L, new BigDecimal("13")));
+        list.add(new RewardCoefficient(3L, new BigDecimal("12")));
+        list.add(new RewardCoefficient(5L, new BigDecimal("10")));
+        list.add(new RewardCoefficient(10L, new BigDecimal("8")));
+        list.add(new RewardCoefficient(25L, new BigDecimal("6")));
+        list.add(new RewardCoefficient(50L, new BigDecimal("4")));
+        list.add(new RewardCoefficient(100L, new BigDecimal("2")));
+        list.add(new RewardCoefficient(999999L, new BigDecimal("1")));
+        return list;
+    }
+
+    @Data
+    static class RewardCoefficient {
+        private Long ranking;
+        private BigDecimal coefficient;
+
+        public RewardCoefficient(Long ranking, BigDecimal coefficient) {
+            this.ranking = ranking;
+            this.coefficient = coefficient;
+        }
     }
 }
